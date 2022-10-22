@@ -23,16 +23,16 @@ def affichagePendu(vie, tableauAffichagePendu):
     return tableauAffichagePendu.get(vie)
 
 etat7="      _______     \n \
-           |       |     \n \
-         |             \n \
-         |          \n \
-             |          \n \
-             |            \n \
-              |            \n \
-               |            \n \
-             |            \n \
-                |            \n \
-                |            \n \
+     |       |    \n \
+     |            \n \
+     |        \\  \n \
+     |            \n \
+     |            \n \
+     |          \n \
+     |          \n \
+     |            \n \
+     |            \n \
+     |            \n \
 "
 
 etat6="      _______     \n \

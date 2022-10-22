@@ -16,6 +16,10 @@ while True:
     message_recu = s.recv(1000)
     message_recu = str(message_recu,'utf-8')
     print(message_recu)
+    if(message_recu.endswith("baby")):
+        print("fin de la communication")
+        s.close()
+        break
     message = input("> ")
     #cas d'un message envoie vide
     if(message.strip() == "exit" or message.strip() == ""):

@@ -22,6 +22,15 @@ def sent(message):
 def affichagePendu(vie, tableauAffichagePendu):
     return tableauAffichagePendu.get(vie)
 
+
+def affichageWrongLetter(nbVie, tableauAffichagePendu,clientCharsSoFar):
+    tmpVie = nbVie
+    MessageTampon1 = ""
+    MessageTampon1 += str(str(affichagePendu((tmpVie+1),tableauAffichagePendu))+"\n")
+    MessageTampon1 += "Cette lettre a déjà été utilisé , Essai(s) restant: = "+str(tmpVie)+"\n"
+    MessageTampon1 += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
+    return MessageTampon1
+
 etat7="      _______     \n \
      |       |    \n \
      |            \n \
@@ -134,6 +143,8 @@ tableauAffichagePendu = {
     5 : etat5,
     6 : etat6,
     7 : etat7,
+    8 : etat7,
+
 }
     
 #Connection socket
@@ -189,18 +200,18 @@ while nbVie > 0 and not gagne:
                 gagne = True
             MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
             MessageWin +=" Pendu : Vie restante: "
-            MessageWin += str(nbVie)
-            MessageWin += "Lettres déjà utilisées : "+clientCharsSoFar
+            MessageWin += str(nbVie)+"\n"
+            MessageWin += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
             sent(MessageWin)
         elif msg in alreadyUsedLetter:
             #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
             nbVie -=1
-            sent("Cette lettre a déjà été utilisé , vie = "+str(nbVie)+"\n"+affichagePendu(nbVie+1,tableauAffichagePendu))
-            
+            clientCharsSoFar+=msg
+            sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
         else:
             nbVie -=1
             clientCharsSoFar+=msg
-            sent("Cette lettre n'est pas dans le mot , vie = "+str(nbVie)+"Lettres déjà utilisés : "+clientCharsSoFar+"\n"+affichagePendu(nbVie+1,tableauAffichagePendu))
+            sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
     elif len(msg) == len(wordSelected):
         #Cas ou c'est un test
         if msg == wordSelected:

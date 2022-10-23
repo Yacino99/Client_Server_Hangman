@@ -20,13 +20,14 @@ while True:
         print("fin de la communication")
         s.close()
         break
-    message = input("> ")
+    else:
+        time.sleep(1)
+        message = input("> ")
     #cas d'un message envoie vide
     if(message.strip() == "exit" or message.strip() == ""):
         print("au revoir")
         s.close()
         break
-    time.sleep(1)
     message_bytes = bytes(message, "utf-8")
     sent = s.send(message_bytes)
 """

@@ -131,8 +131,6 @@ tableauAffichagePendu = {
     5 : etat5,
     6 : etat6,
     7 : etat7,
-    8 : etat7,
-
 }
     
 #Connection socket
@@ -163,7 +161,8 @@ clientCharsSoFar = ""
 nbVie = 7
 gagne = False
 partie = True
-while nbVie > 0 and not gagne:
+lost = False
+while (nbVie > 0 and not gagne)or lost:
     msg = socketClient.recv(1024)
     msg = msg.decode()
     print("le client a envoyé : ",msg)
@@ -191,15 +190,15 @@ while nbVie > 0 and not gagne:
             MessageWin += str(nbVie)+"\n"
             MessageWin += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
             sent(MessageWin)
-        elif msg in alreadyUsedLetter:
-            #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
-            nbVie -=1
-            clientCharsSoFar+=msg
-            sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
         else:
-            nbVie -=1
+            #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
             clientCharsSoFar+=msg
-            sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
+            nbVie -=1
+            if(nbVie <= 0):
+                lost = True
+                sent("Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu))
+            else:
+                sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
     elif len(msg) == len(wordSelected):
         #Cas ou c'est un test
         if msg == wordSelected:

@@ -16,17 +16,22 @@ def send(socket, msg):
      socket.send(bytes(msg,'utf-8'))
 
 
+compteur = 0
 while T: 
     [read,_,_] = select.select(clients,[],[])
-    for s in read:  
+    for s in read:
+        compteur+=1
         if s == mysocket:  
             (socketclient,addr) = s.accept()
             clients.append(socketclient) 
-            namesocket = addr
+            send(socketclient, "Voici le port que vous utilisez : ")
+            send(socketclient,str(addr[1]))
+            send(socketclient, "Veuillez choisir votre pseudo : ")
+
+
         else:
             msg = s.recv(1000)
-            message = str(namesocket)+":"
-            message += str(msg, 'utf-8')
+            message = str(msg, 'utf-8')
             print("SERVER: "+message)
             if len(msg) == 0:
                 s.close()

@@ -140,6 +140,8 @@ mysocket.bind(('',port))
 mysocket.listen(1)
 (socketClient,_) = mysocket.accept()
 
+#message pour indiquer au client qu'il faut appuyer sur entrer pour fermer le socket de sont coté
+messageQuitter  = "appuyer sur ENTRER pour quitter"
 
 #Message de présentation du jeu
 Message1 = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
@@ -183,7 +185,7 @@ while (nbVie > 0 and not gagne)or lost:
             alreadyUsedLetter+=msg
             print("tampon : "+tampon)
             if tampon=="":
-                sent("Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected)
+                sent("Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
                 gagne = True
             MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
             MessageWin +=" Pendu : Vie restante: "
@@ -196,28 +198,32 @@ while (nbVie > 0 and not gagne)or lost:
             nbVie -=1
             if(nbVie <= 0):
                 lost = True
-                sent("Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu))
+                sent("Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
+                break
             else:
                 sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
     elif len(msg) == len(wordSelected):
         #Cas ou c'est un test
         if msg == wordSelected:
             #win
-            sent("Vous avez gagné ! Bravo !")
+            sent("Vous avez gagné ! Bravo ! "+messageQuitter)
             gagne = True
         else:
-            sent("Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux.")
+            sent("Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
+            lost = True
             break
     else:
-        sent("Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché")
+        sent("Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)
+        lost = True
         #Cas ou il faut renvoyer la demande de char
         break
     if nbVie <= 0:
-        sent("\nyou died, hasta la vista baby")
+        sent("\nyou died, hasta la vista baby "+messageQuitter)
+        break
     
     #sent(affichagePendu(nbVie,tableauAffichagePendu))
 
-if(nbVie > 0):
+if(nbVie > 0 and not lost):
     print("le client a gagné la partie et a fini de jouer")
 else:
     print("le client a perdu la partie et a fini de jouer")

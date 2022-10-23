@@ -1,5 +1,4 @@
 from socket import *
-import struct
 import sys
 import select
 

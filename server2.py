@@ -14,7 +14,8 @@ T = True
 
 def send(socket, msg):
      socket.send(bytes(msg,'utf-8'))
-
+pseudo = "-1"
+portSocket = "-1"
 
 compteur = 0
 while T: 
@@ -25,14 +26,14 @@ while T:
             (socketclient,addr) = s.accept()
             clients.append(socketclient) 
             send(socketclient, "Voici le port que vous utilisez : ")
-            send(socketclient,str(addr[1]))
-            send(socketclient, "Veuillez choisir votre pseudo : ")
+            portSocket = str(addr[1])
+            send(socketclient,portSocket)
 
 
         else:
             msg = s.recv(1000)
             message = str(msg, 'utf-8')
-            print("SERVER: "+message)
+            print(message)
             if len(msg) == 0:
                 s.close()
                 clients.remove(s)

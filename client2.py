@@ -15,8 +15,9 @@ myself = gethostname()
 mysocket.connect((host, port))
 
 rcv = [sys.stdin , mysocket]
-identite = ""
-pseudo = ""
+pseudo = "-1"
+portSocket = "-1"
+
 T = True
 while T:
     [read,_,_] = select.select(rcv,[],[])
@@ -24,29 +25,22 @@ while T:
         msg = sys.stdin.readline()
         if msg == "FIN\n":
             T = False
-        if len(msg)==5:
-            identite = msg
-        if(identite!=""):
-            msg = identite + " : " + msg
-            send(mysocket,msg)
-        else :
-            msg = myself + " : " + msg
-            message = bytes(msg, "utf-8")
-            sent = mysocket.send(message)
 
-        if pseudo != "":
-            pseudo = input("\nVeuillez choisir votre pseudo")
-            sent = send(mysocket, "Mon pseudo est "+pseudo)
+        if pseudo == "-1":
+            print("Veuillez choisir votre Pseudo: ")
+            pseudo = input("<")
+            sent = send(mysocket, pseudo)
+        else:
+            msg = pseudo + " : " + msg
+
+        message = bytes(msg, "utf-8")
+        sent = mysocket.send(message)
+
 
 
     if mysocket in read :
-
-        
         message= mysocket.recv(1000)
         msg = str(message,"utf-8")
-
-        if len(msg)==5:
-            identite = msg 
         print(msg)
 #fermeture du socket server
 mysocket.close()

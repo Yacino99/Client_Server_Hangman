@@ -1,32 +1,34 @@
 from socket import *
 import sys
 import select
-
-def sent(message):
-    message = bytes(str(message), 'utf-8')
-    mysocket.send(message)
-
-
-
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
 port = int(sys.argv[1])
 mysocket.bind(('',port))
 mysocket.listen(1)
 
-(socketClient,_) = mysocket.accept()
-(socketClient2,_) = mysocket.accept()
-clients = [ socketClient, socketClient2]   
-sent("Test")
-
-while len(clients) > 0:
+clients=[mysocket]
+T = True
+while T: 
     [read,_,_] = select.select(clients,[],[])
-    for s in read:
-        msg = s.recv(1000)
-        if len(msg) == 0:
-            s.close()
-            clients.remove(s)
+    for s in read:    
+        if s == mysocket:  
+            (socketclient,_) = s.accept()
+            clients.append(socketclient) 
         else:
+            msg = s.recv(1000)
             message = str(msg, 'utf-8')
-            print(message)
+            if len(msg) == 0 or message[-4:-1] == "FIN":
+                s.close()
+                clients.remove(s)
+            else:
+                print(message)
+                # On écrit cela dans le but de retransmettre le message: 
+                for i in clients:
+                    if i != s and i != mysocket:
+                        i.send(bytes(message, 'utf-8'))
+
+for z in clients:
+    z.close()
+
 mysocket.close()

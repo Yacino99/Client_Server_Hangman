@@ -1,6 +1,6 @@
 #Fichier contenant nos fonctions
 
-def broadcast(clients, msg):
+def broadcast(clients, msg, mysocket):
     for i in clients:
         if i != mysocket:
             send(i,str(msg))

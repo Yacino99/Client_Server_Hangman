@@ -17,6 +17,13 @@ mysocket.connect((host, port))
 rcv = [sys.stdin , mysocket]
 pseudo = "-1"
 portSocket = "-1"
+identifiant = "-1"
+if pseudo == "-1":
+    print("Veuillez choisir votre Pseudo: ")
+    pseudo = input("<")
+
+pseudoAttribution = 0
+identifiantAttribution = 0
 
 T = True
 while T:
@@ -25,22 +32,31 @@ while T:
         msg = sys.stdin.readline()
         if msg == "FIN\n":
             T = False
-
-        if pseudo == "-1":
-            print("Veuillez choisir votre Pseudo: ")
-            pseudo = input("<")
-            sent = send(mysocket, pseudo)
         else:
-            msg = pseudo + " : " + msg
+            #On attribue le pseudo
+            if pseudoAttribution == 0:
+                message = "CODE001:"+str(pseudo)
+                send(mysocket,message)
+                pseudoAttribution = 1
+            #On attribue l'identifiant
+                
+            
 
-        message = bytes(msg, "utf-8")
-        sent = mysocket.send(message)
+        #sent = mysocket.send("Test jeu")
 
 
 
     if mysocket in read :
-        message= mysocket.recv(1000)
-        msg = str(message,"utf-8")
-        print(msg)
+            message= mysocket.recv(1000)
+            msg = str(message,"utf-8")
+
+            if identifiantAttribution== 0 and msg.__contains__("identifiant"):
+                identifiantTampon = msg.split(":")
+                portSocket = identifiantTampon[1]
+                identifiant = identifiantTampon[2]
+                print("Je suis"+portSocket+":"+identifiant)
+                identifiantAttribution = 1
+            else:
+                print(msg)
 #fermeture du socket server
 mysocket.close()

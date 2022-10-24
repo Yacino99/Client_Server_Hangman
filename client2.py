@@ -36,11 +36,11 @@ while T:
             #On attribue le pseudo
             if pseudoAttribution == 0:
                 message = "CODE001:"+str(pseudo)
-                send(mysocket,message)
+               # send(mysocket,message)
                 pseudoAttribution = 1
-            else:
-                MessageInput = input("<")
-                send(mysocket, MessageInput)
+           # else:
+            MessageInput = input("<")
+            send(mysocket, MessageInput)
         #sent = mysocket.send("Test jeu")
     if mysocket in read :
             message= mysocket.recv(1000)
@@ -50,7 +50,7 @@ while T:
                 identifiantTampon = msg.split(":")
                 portSocket = identifiantTampon[1]
                 identifiant = identifiantTampon[2]
-                print("Je suis"+portSocket+":"+identifiant)
+              #  print("Je suis"+portSocket+":"+identifiant)
                 identifiantAttribution = 1
             else:
                 print(msg)

@@ -12,6 +12,14 @@ mysocket.listen(1)
 clients=[mysocket]
 T = True
 
+def broadcast(clients, msg):
+    for i in clients:
+        if i != mysocket:
+            send(i,str(msg))
+
+def sendToPort(socket, msg, port):
+    socket.sendto(bytes(msg,'utf-8'), ("127.0.0.1",int(port)))
+
 def send(socket, msg):
      socket.send(bytes(msg,'utf-8'))
 
@@ -29,12 +37,18 @@ while T:
             send(socketclient, "identifiants:"+messageIdentifiant)
 
         else:
+            portSocket = addr[1]
             msg = s.recv(1000)
             message = str(msg, 'utf-8')
             if len(msg) == 0:
                 s.close()
                 clients.remove(s)
+            else:
+                #Message speciique
+                sendToPort(s,message+" envoyé à un port specifique",portSocket)
 
+                #Broadcast
+                broadcast(clients, message+" envoyé en broadcast")
 for z in clients:
     z.close()
 

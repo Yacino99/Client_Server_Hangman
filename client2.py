@@ -38,14 +38,10 @@ while T:
                 message = "CODE001:"+str(pseudo)
                 send(mysocket,message)
                 pseudoAttribution = 1
-            #On attribue l'identifiant
-                
-            
-
+            else:
+                MessageInput = input("<")
+                send(mysocket, MessageInput)
         #sent = mysocket.send("Test jeu")
-
-
-
     if mysocket in read :
             message= mysocket.recv(1000)
             msg = str(message,"utf-8")

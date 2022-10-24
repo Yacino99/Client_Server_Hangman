@@ -199,6 +199,7 @@ def playerThread(c):
         msg = msg.lower()
         #Verifier la chaine de charactère
         if len(msg)  == 0:
+            print("Le client veut partir")
             # n'arrive que si le client est parti
             break
         elif len(msg) == 1 and msg.isalpha():  #test si c'est un char
@@ -268,8 +269,8 @@ while T:
             (socketclient,addr) = s.accept()
             clients.append(socketclient)
             portSocket = addr[1]
-            messageIdentifiant = str(compteur)+":"+str(portSocket)
-            send(socketclient, "identifiants:"+messageIdentifiant)
+            #messageIdentifiant = str(compteur)+":"+str(portSocket)
+            #send(socketclient, "identifiants:"+messageIdentifiant)
             start_new_thread(playerThread, (socketclient,))
         else:
             portSocket = addr[1]

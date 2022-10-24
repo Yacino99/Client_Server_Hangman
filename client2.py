@@ -1,5 +1,4 @@
 from socket import *
-import time
 import sys
 import select
 def send(socket, msg):

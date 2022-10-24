@@ -1,7 +1,5 @@
 from socket import *
-import time
 import sys
-import select
 if len(sys.argv) != 3:
     sys.exit(-1)
 
@@ -21,7 +19,6 @@ while True:
         s.close()
         break
     else:
-        time.sleep(1)
         message = input("> ")
     #cas d'un message envoie vide
     if(message.strip() == "exit" or message.strip() == ""):
@@ -30,25 +27,5 @@ while True:
         break
     message_bytes = bytes(message, "utf-8")
     sent = s.send(message_bytes)
-"""
-while True:
-    socket_list = [sys.stdin, s]
-    read_sockets, write_sockets, error_sockets = select.select(
-        socket_list, [], [])
-    for sock in read_sockets:
-        if sock == s:
-            data = sock.recv(1024)
-            if not data:
-                print('\nDisconnected from server')
-                break
-            else:
-                print(data.decode())
-        else:
-            msg =input("> ")
-            s.send(bytes(str(msg),'utf-8'))
-            
-"""
-
-
 
 s.close()

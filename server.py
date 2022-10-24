@@ -1,137 +1,8 @@
 
 from socket import *
 import sys
+from utils import *
 #Renvoie le mot "caché" en fonction des lettres déjà trouvés
-def lettreTrouve(wordSecret, correctLetters):
-    blanks = '_' * len(wordSecret)
-    res = ''
-    k = -1
-    for i in wordSecret:
-        k += 1
-        if i in correctLetters:
-            blanks = blanks[:k]+i+blanks[k+1:]
-    for letter in blanks:
-        res+=" "+letter
-    return res
-#Envoyer un message au socketClient
-def sent(message):
-    message = bytes(str(message), 'utf-8')
-    socketClient.send(message)
-
-#Afficher le pendu en fonction de la vie du client
-def affichagePendu(vie, tableauAffichagePendu):
-    return tableauAffichagePendu.get(vie)
-
-
-def affichageWrongLetter(nbVie, tableauAffichagePendu,clientCharsSoFar):
-    tmpVie = nbVie
-    MessageTampon1 = ""
-    MessageTampon1 += str(str(affichagePendu((tmpVie+1),tableauAffichagePendu))+"\n")
-    MessageTampon1 += "Cette lettre a déjà été utilisé , Essai(s) restant: = "+str(tmpVie)+"\n"
-    MessageTampon1 += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
-    return MessageTampon1
-
-etat7="      _______     \n \
-     |       |    \n \
-     |            \n \
-     |            \n \
-     |            \n \
-     |            \n \
-     |          \n \
-     |          \n \
-     |            \n \
-     |            \n \
-     |            \n \
-"
-
-etat6="      _______     \n \
-     |       |    \n \
-     |       _    \n \
-     |      / \\  \n \
-     |      \\_/  \n \
-     |            \n \
-     |          \n \
-     |          \n \
-     |            \n \
-     |            \n \
-     |            \n \
-"
-
-etat5="      _______     \n \
-     |       |    \n \
-     |       _    \n \
-     |      / \\  \n \
-     |      \\_/  \n \
-     |      _|_   \n \
-     |      | | \n \
-     |      |_| \n \
-     |            \n \
-     |            \n \
-     |            \n \
-"
-
-etat4="      _______     \n \
-     |       |    \n \
-     |       _    \n \
-     |      / \\  \n \
-     |      \\_/  \n \
-     |      _|_   \n \
-     |    / | | \n \
-     |   /  |_|  \n \
-     |            \n \
-     |            \n \
-     |            \n \
-"
-
-etat3="      _______     \n \
-     |       |    \n \
-     |       _    \n \
-     |      / \\  \n \
-     |      \\_/  \n \
-     |      _|_   \n \
-     |    / | | \\\n \
-     |   /  |_|  \\ \n \
-     |            \n \
-     |            \n \
-     |            \n \
-"
-
-etat2="      _______     \n \
-     |       |    \n \
-     |       _    \n \
-     |      / \\  \n \
-     |      \\_/  \n \
-     |      _|_   \n \
-     |    / | | \\\n \
-     |   /  |_|  \\ \n \
-     |     //^     \n \
-     |    //        \n \
-     |   //         \n \
-    "
-
-
-etat1=   "  _______     \n\
-         |       |    \n\
-         |       _    \n\
-         |      / \\  \n\
-         |      \\_/  \n\
-         |      _|_   \n\
-         |    / | | \\ \n\
-         |   /  |_|  \\ \n\
-         |     //^\\\\     \n\
-         |    //   \\\\     \n\
-         |   //     \\\\    \n\
-        "
-
-tableauAffichagePendu = { 
-    1 : etat1,
-    2 : etat2,
-    3 : etat3,
-    4 : etat4,
-    5 : etat5,
-    6 : etat6,
-    7 : etat7,
-}
     
 #Connection socket
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
@@ -145,7 +16,7 @@ messageQuitter  = "appuyer sur ENTRER pour quitter"
 
 #Message de présentation du jeu
 Message1 = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
-sent(Message1)
+send(socketClient, Message1)
 
 #Mot selectionner pour le jeu du Pendu
 wordSelected = "Bateau"
@@ -185,40 +56,40 @@ while (nbVie > 0 and not gagne)or lost:
             alreadyUsedLetter+=msg
             print("tampon : "+tampon)
             if tampon=="":
-                sent("Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
+                send(socketClient,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
                 gagne = True
             MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
             MessageWin +=" Pendu : Vie restante: "
             MessageWin += str(nbVie)+"\n"
             MessageWin += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
-            sent(MessageWin)
+            send(socketClient,MessageWin)
         else:
             #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
             clientCharsSoFar+=msg
             nbVie -=1
             if(nbVie <= 0):
                 lost = True
-                sent("Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
+                send(socketClient,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
                 break
             else:
-                sent(affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
+                send(socketClient,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
     elif len(msg) == len(wordSelected):
         #Cas ou c'est un test
         if msg == wordSelected:
             #win
-            sent("Vous avez gagné ! Bravo ! "+messageQuitter)
+            send(socketClient,"Vous avez gagné ! Bravo ! "+messageQuitter)
             gagne = True
         else:
-            sent("Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
+            send(socketClient,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
             lost = True
             break
     else:
-        sent("Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)
+        send(socketClient,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)
         lost = True
         #Cas ou il faut renvoyer la demande de char
         break
     if nbVie <= 0:
-        sent("\nyou died, hasta la vista baby "+messageQuitter)
+        send(socketClient,"\nyou died, hasta la vista baby "+messageQuitter)
         break
     
     #sent(affichagePendu(nbVie,tableauAffichagePendu))

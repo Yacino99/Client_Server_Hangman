@@ -27,7 +27,8 @@ def menu(socket):
             rep = None
         elif rep=="3":
             print("\n Chat")
-            send(socket,"CODE003")
+            pseudo = input("Veuillez choisir votre pseudo!")
+            send(socket,"CODE003"+":")
             rep = None
         elif rep=="4":
             print("\n Quitter") 

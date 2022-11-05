@@ -1,9 +1,6 @@
 #Fichier contenant nos fonctions
 
-def broadcast(clients, msg, mysocket):
-    for i in clients:
-        if i != mysocket:
-            send(i,str(msg))
+
 
 def sendToPort(socket, msg, port):
     socket.sendto(bytes(msg,'utf-8'), ("127.0.0.1",int(port)))

@@ -8,12 +8,29 @@ mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
 port = int(sys.argv[1])
 mysocket.bind(('',port))
-mysocket.listen(1)
+mysocket.listen(5)
 
 clients=[mysocket]
 T = True
+def broadcast(clients, msg):
+    for i in clients:
+        if i != mysocket:
+            send(i,str(msg))
 
-def playerThread(c):
+def chatThread(socket, client, pseudo):
+    print("chatThread: "+pseudo)
+    MessageDebut = "Bienvenu sur notre chat! Votre pseudo est: "+pseudo+"\n"
+    send(socket,MessageDebut)
+
+    
+    while True:
+        msg = socket.recv(1024)
+        message = pseudo+":"
+        messageTest = message+str(msg,'utf-8')+"\n"
+        broadcast(client,messageTest)
+
+
+def playerThread(c, port):
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
@@ -40,7 +57,7 @@ def playerThread(c):
     while (nbVie > 0 and not gagne)or lost:
         msg = c.recv(1024)
         msg = msg.decode()
-        print("le client a envoyé : ",msg)
+        print("le client "+str(port)+" a envoyé : ",msg)
         msg = msg.lower()
         #Verifier la chaine de charactère
         if len(msg)  == 0:
@@ -106,6 +123,7 @@ def playerThread(c):
 
 portSocket = "-1"
 compteur = -1
+Jeu = 0
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:
@@ -113,24 +131,30 @@ while T:
         if s == mysocket:  
             (socketclient,addr) = s.accept()
             clients.append(socketclient)
-            portSocket = addr[1]
-            #messageIdentifiant = str(compteur)+":"+str(portSocket)
-            #send(socketclient, "identifiants:"+messageIdentifiant)
-            start_new_thread(playerThread, (socketclient,))
-        else:
-            portSocket = addr[1]
+        else: 
             msg = s.recv(1000)
             message = str(msg, 'utf-8')
+            if message in "CODE001":
+                print("start new thread from port "+str(addr[1]))
+                start_new_thread(playerThread, (socketclient,addr[1]))
+            elif message in "CODE002":
+                print("Jeu = 2")
+            elif message.find("CODE003")!=-1:
+                print("Jeu = 3")
+                pseudo = message.split(":")[1]
+                start_new_thread(chatThread, (socketclient,clients,pseudo,))
             if len(msg) == 0:
                 s.close()
                 clients.remove(s)
+for z in clients:
+    z.close()
+
+mysocket.close()
+
+
           #  else:
                 #Message speciique
                 #sendToPort(s,message+" envoyé à un port specifique",portSocket)
 
                 #Broadcast
               #  broadcast(clients, message+" envoyé en broadcast")
-for z in clients:
-    z.close()
-
-mysocket.close()

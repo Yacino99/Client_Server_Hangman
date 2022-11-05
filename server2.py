@@ -8,26 +8,36 @@ mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
 port = int(sys.argv[1])
 mysocket.bind(('',port))
-mysocket.listen(5)
+mysocket.listen(100)
 
 clients=[mysocket]
 T = True
 def broadcast(clients, msg):
-    for i in clients:
-        if i != mysocket:
-            send(i,str(msg))
+    for client in clients:
+        if client != mysocket:
+            try:
+                send(client,str(msg))
+            except:
+                client.close()
+            remove(client)
 
-def chatThread(socket, client, pseudo):
+
+def remove(connection):
+    if connection in clients:
+        clients.remove(connection)
+
+def chatThread(socket,addr, pseudo):
     print("chatThread: "+pseudo)
     MessageDebut = "Bienvenu sur notre chat! Votre pseudo est: "+pseudo+"\n"
     send(socket,MessageDebut)
-
-    
     while True:
-        msg = socket.recv(1024)
-        message = pseudo+":"
-        messageTest = message+str(msg,'utf-8')+"\n"
-        broadcast(client,messageTest)
+        try:
+            msg = socket.recv(1024)
+            message = pseudo+":"
+            messageTest = message+str(msg,'utf-8')+"\n"
+            broadcast(clients,messageTest)
+        except:
+            continue
 
 
 def playerThread(c, port):
@@ -50,7 +60,6 @@ def playerThread(c, port):
     #Nombre de vie du client
     nbVie = 7
     gagne = False
-    partie = True
     lost = False
     messageQuitter  = "appuyer sur ENTRER pour quitter"
 
@@ -111,9 +120,6 @@ def playerThread(c, port):
         if nbVie <= 0:
             send(c,"\nyou died, hasta la vista baby "+messageQuitter)
             break
-        
-        #sent(affichagePendu(nbVie,tableauAffichagePendu))
-
     if(nbVie > 0 and not lost):
         print("le client a gagné la partie et a fini de jouer")
     else:
@@ -121,40 +127,30 @@ def playerThread(c, port):
 
 
 
-portSocket = "-1"
-compteur = -1
-Jeu = 0
+def checker(c,addr):
+    msg = c.recv(1024)
+    msg = msg.decode()
+    if msg in "CODE001":
+        playerThread(c,addr)
+    elif msg in "CODE002":
+        print("//TODO CODE002")
+    elif msg.find("CODE003")!=-1:
+        print(msg)
+        pseudo = msg.split(":")[1]
+        chatThread(c,addr,pseudo)
+    if len(msg) == 0:
+        s.close()
+        clients.remove(s)
+
+
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:
-        compteur+=1
-        if s == mysocket:  
-            (socketclient,addr) = s.accept()
+        if s == mysocket:
+            (socketclient,addr) = mysocket.accept()
             clients.append(socketclient)
-        else: 
-            msg = s.recv(1000)
-            message = str(msg, 'utf-8')
-            if message in "CODE001":
-                print("start new thread from port "+str(addr[1]))
-                start_new_thread(playerThread, (socketclient,addr[1]))
-            elif message in "CODE002":
-                print("Jeu = 2")
-            elif message.find("CODE003")!=-1:
-                print("Jeu = 3")
-                pseudo = message.split(":")[1]
-                start_new_thread(chatThread, (socketclient,clients,pseudo,))
-            if len(msg) == 0:
-                s.close()
-                clients.remove(s)
+            start_new_thread(checker, (socketclient,addr))
 for z in clients:
     z.close()
 
 mysocket.close()
-
-
-          #  else:
-                #Message speciique
-                #sendToPort(s,message+" envoyé à un port specifique",portSocket)
-
-                #Broadcast
-              #  broadcast(clients, message+" envoyé en broadcast")

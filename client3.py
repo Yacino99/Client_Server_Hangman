@@ -6,7 +6,6 @@ if len(sys.argv) != 3:
     sys.exit(-1)
 
 
-
 def menu(socket):
     rep=True
     while rep:
@@ -28,8 +27,9 @@ def menu(socket):
         elif rep=="3":
             print("\n Chat")
             pseudo = input("Veuillez choisir votre pseudo!")
-            send(socket,"CODE003"+":")
+            send(socket,"CODE003"+":"+pseudo)
             rep = None
+            chat = 1
         elif rep=="4":
             print("\n Quitter") 
             rep = None
@@ -45,15 +45,20 @@ s.connect((host, port))
 
 menu(s)
 while True:
-    message_recu = s.recv(1000)
-    message_recu = str(message_recu,'utf-8')
-    print(message_recu)
-    message = input("> ")
-    #cas d'un message envoie vide
-    if(message.strip() == "exit" or message.strip() == ""):
-        print("au revoir")
-        s.close()
-        break
-    message_bytes = bytes(message, "utf-8")
-    sent = s.send(message_bytes)
+    try:
+        message_recu = s.recv(1000)
+        message_recu = str(message_recu,'utf-8')
+        print(message_recu)
+        message = input("> ")
+        #cas d'un message envoie vide
+        if(message.strip() == "exit" or message.strip() == ""):
+            print("au revoir")
+            s.close()
+            break
+        message_bytes = bytes(message, "utf-8")
+        sent = s.send(message_bytes)
+    except:
+        continue
+    
+
 s.close()

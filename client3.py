@@ -1,7 +1,7 @@
 from socket import *
 import sys
 from utils import *
-
+from _thread import *
 if len(sys.argv) != 3:
     sys.exit(-1)
 
@@ -26,10 +26,9 @@ def menu(socket):
             rep = None
         elif rep=="3":
             print("\n Chat")
-            pseudo = input("Veuillez choisir votre pseudo!")
+            pseudo = input("Veuillez choisir votre pseudo!\n")
             send(socket,"CODE003"+":"+pseudo)
             rep = None
-            chat = 1
         elif rep=="4":
             print("\n Quitter") 
             rep = None
@@ -43,22 +42,27 @@ port = int(sys.argv[2])
 s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 s.connect((host, port))
 
+
+
+def Sending(c):
+    message = input("> ")
+    if(message.strip() == "exit" or message.strip() == ""):
+        print("au revoir")
+        s.close()
+        #break
+    message_bytes = bytes(message, "utf-8")
+    sent = s.send(message_bytes)
+
 menu(s)
+compteur = 0
 while True:
     try:
         message_recu = s.recv(1000)
         message_recu = str(message_recu,'utf-8')
         print(message_recu)
-        message = input("> ")
-        #cas d'un message envoie vide
-        if(message.strip() == "exit" or message.strip() == ""):
-            print("au revoir")
-            s.close()
-            break
-        message_bytes = bytes(message, "utf-8")
-        sent = s.send(message_bytes)
+        if compteur == 0:
+            start_new_thread(Sending, (s,))
     except:
         continue
-    
-
+   
 s.close()

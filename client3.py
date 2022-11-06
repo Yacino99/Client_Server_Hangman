@@ -45,13 +45,14 @@ s.connect((host, port))
 
 
 def Sending(c):
-    message = input("> ")
-    if(message.strip() == "exit" or message.strip() == ""):
-        print("au revoir")
-        s.close()
-        #break
-    message_bytes = bytes(message, "utf-8")
-    sent = s.send(message_bytes)
+    while True:
+        message = input("> ")
+        if(message.strip() == "exit" or message.strip() == ""):
+            print("au revoir")
+            s.close()
+            #break
+        message_bytes = bytes(message, "utf-8")
+        sent = s.send(message_bytes)
 
 menu(s)
 compteur = 0
@@ -62,6 +63,7 @@ while True:
         print(message_recu)
         if compteur == 0:
             start_new_thread(Sending, (s,))
+            compteur+=1
     except:
         continue
    

@@ -215,6 +215,12 @@ def playerThread(c, port):
         print("le client a perdu la partie et a fini de jouer")
 
 
+def playAgainstServer(c,addr):
+    #Message de présentation du jeu
+    MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez me laisser deviner votre mot!"
+    send(c,MessageDebut)
+
+
 
 def checker(c,addr):
     global compteurJoueur
@@ -236,6 +242,10 @@ def checker(c,addr):
         print(msg)
         pseudo = msg.split(":")[1]
         chatThread(c,addr,pseudo)
+    elif msg.find("CODE004")!=-1:
+        print(msg)
+        motCacheDuServeur = msg.split(":")[1]
+        playAgainstServer(c,addr)
     if len(msg) == 0:
         s.close()
         clients.remove(s)

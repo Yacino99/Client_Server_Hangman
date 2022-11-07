@@ -30,6 +30,11 @@ def menu(socket):
             send(socket,"CODE003"+":"+pseudo)
             rep = None
         elif rep=="4":
+            print("\n Jouer contre le serveur")
+            motCaches = input("Veuillez choisir le mot que le serveur doit deviner\n")
+            send(socket,"CODE004"+":"+motCaches)
+            rep = None
+        elif rep=="5":
             print("\n Quitter") 
             rep = None
             socket.close()

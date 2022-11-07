@@ -4,6 +4,9 @@ import sys
 import select
 from _thread import *
 from utils import *
+compteurJoueur=0
+
+
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
 port = int(sys.argv[1])
@@ -31,13 +34,14 @@ def chatThread(socket,addr, pseudo):
         msg = msg.decode()
         print(msg)
         message = pseudo+":"
-        messageTest = message+msg+"\n"
+        messageTest = message+msg
         print(messageTest)
         broadcast(messageTest)
 
 
 
 def twoPlayerThread(c, port):
+    print("twoPlayerThread")
     MessageDebut = "Bienvenu sur le jeu du Pendu en version 2 joueurs! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
     #Mot selectionner pour le jeu du Pendu
@@ -211,14 +215,16 @@ def playerThread(c, port):
         print("le client a perdu la partie et a fini de jouer")
 
 
-compteurJoueur=0
 
 def checker(c,addr):
+    global compteurJoueur
     msg = c.recv(1024)
     msg = msg.decode()
     if msg in "CODE001":
         playerThread(c,addr)
     elif msg in "CODE002":
+        compteurJoueur+=1
+        print(compteurJoueur)
         if compteurJoueur < 2:
             broadcast("En attente d'un deuxième joueur")
         elif compteurJoueur == 2:
@@ -226,7 +232,6 @@ def checker(c,addr):
             twoPlayerThread(c,addr)
         else:
             broadcast(clients, "Vous êtes plus de deux joueurs")
-
     elif msg.find("CODE003")!=-1:
         print(msg)
         pseudo = msg.split(":")[1]
@@ -240,7 +245,6 @@ while T:
     [read,_,_] = select.select(clients,[],[])
     for s in read:
         if s == mysocket:
-            compteurJoueur+=1
             (socketclient,addr) = mysocket.accept()
             clients.append(socketclient)
             start_new_thread(checker, (socketclient,addr))

@@ -244,7 +244,7 @@ def checker(c,addr):
         playerThread(c,addr,tailleMot)
     elif msg in "CODE002":
         if(lancerLaPartie==0):
-            countdown(2)
+            countdown(5)
             compteurJoueur+=1
             print(compteurJoueur)
             broadcast("En attente de joueurs")

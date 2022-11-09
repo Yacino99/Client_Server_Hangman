@@ -11,7 +11,7 @@ def menu(socket):
     while rep:
         print("""
         1.Jouer au pendu 1 Joueur
-        2.Jouer au pendu 2 joueurs
+        2.Jouer au pendu N joueurs
         3.Chat
         4.Exit/Quit
         """)

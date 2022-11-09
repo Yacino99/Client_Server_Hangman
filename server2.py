@@ -41,6 +41,7 @@ def chatThread(socket,addr, pseudo):
 
 
 def twoPlayerThread(c, port):
+
     print("twoPlayerThread")
     MessageDebut = "Bienvenu sur le jeu du Pendu en version 2 joueurs! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
@@ -215,10 +216,11 @@ def playerThread(c, port):
         print("le client a perdu la partie et a fini de jouer")
 
 
-def playAgainstServer(c,addr):
+def playAgainstServer(c,addr,motCacheDuServeur):
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez me laisser deviner votre mot!"
     send(c,MessageDebut)
+
 
 
 
@@ -233,11 +235,12 @@ def checker(c,addr):
         print(compteurJoueur)
         if compteurJoueur < 2:
             broadcast("En attente d'un deuxième joueur")
+            twoPlayerThread(c,addr)
         elif compteurJoueur == 2:
-            broadcast("Deux joueurs sont rentrés: vous pouvez jouer")
+            broadcast("Deux joueurs sont rentrés: vous pouvez jouer\n")
             twoPlayerThread(c,addr)
         else:
-            broadcast(clients, "Vous êtes plus de deux joueurs")
+            broadcast("Vous êtes plus de deux joueurs")
     elif msg.find("CODE003")!=-1:
         print(msg)
         pseudo = msg.split(":")[1]
@@ -245,7 +248,7 @@ def checker(c,addr):
     elif msg.find("CODE004")!=-1:
         print(msg)
         motCacheDuServeur = msg.split(":")[1]
-        playAgainstServer(c,addr)
+        playAgainstServer(c,addr,motCacheDuServeur)
     if len(msg) == 0:
         s.close()
         clients.remove(s)

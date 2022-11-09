@@ -139,15 +139,12 @@ def lettreTrouve(wordSecret, correctLetters):
 
 def importMotFichier(n):
     liste_mots = []
+    n = int(n)
     with open('mots.txt') as f:
         for line in f.readlines():
-            if(len(line) == n):
+            if(len(line.strip()) == n):
                 liste_mots.append(line)
     taille_liste = len(liste_mots)
     mot_choisi = liste_mots[random.randint(0, taille_liste-1)] 
-    return mot_choisi.lower()
+    return mot_choisi.lower().strip()
 
-
-mot = importMotFichier(10)
-
-print(mot)

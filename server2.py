@@ -140,15 +140,17 @@ def twoPlayerThread(c, port):
 
 
 
-def playerThread(c, port):
+def playerThread(c, port, tailleMot):
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
 
     #Mot selectionner pour le jeu du Pendu
-    wordSelected = "Bateau"
-    wordSelected = wordSelected.lower()
+    #wordSelected = "Bateau"
+    #wordSelected = wordSelected.lower()
 
+    wordSelected = importMotFichier(tailleMot)
+    print("Le mot que le client doit trouver est :"+wordSelected)
     #Tampon pour le mot "gagnant"
     tampon = wordSelected
 
@@ -161,7 +163,7 @@ def playerThread(c, port):
     nbVie = 7
     gagne = False
     lost = False
-    messageQuitter  = "appuyer sur ENTRER pour quitter"
+    messageQuitter  = "Votre mot était: "+wordSelected+"\nappuyer sur ENTRER pour quitter"
 
     while (nbVie > 0 and not gagne)or lost:
         msg = c.recv(1024)
@@ -222,6 +224,7 @@ def playerThread(c, port):
             break
     if(nbVie > 0 and not lost):
         print("le client a gagné la partie et a fini de jouer")
+    
     else:
         print("le client a perdu la partie et a fini de jouer")
 
@@ -238,8 +241,10 @@ def checker(c,addr):
     global compteurJoueur
     msg = c.recv(1024)
     msg = msg.decode()
-    if msg in "CODE001":
-        playerThread(c,addr)
+    if msg.find("CODE001")!=-1:
+        tailleMot = msg.split(":")[1]
+        print(tailleMot)
+        playerThread(c,addr,tailleMot)
     elif msg in "CODE002":
         compteurJoueur+=1
         print(compteurJoueur)

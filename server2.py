@@ -7,6 +7,7 @@ from utils import *
 import time
 compteurJoueur=0
 lancerLaPartie=0
+partieDejaLance=0
 
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
@@ -145,10 +146,6 @@ def playerThread(c, port, tailleMot):
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
 
-    #Mot selectionner pour le jeu du Pendu
-    #wordSelected = "Bateau"
-    #wordSelected = wordSelected.lower()
-
     wordSelected = importMotFichier(tailleMot)
     print("Le mot que le client doit trouver est :"+wordSelected)
     #Tampon pour le mot "gagnant"
@@ -246,16 +243,17 @@ def checker(c,addr):
         print(tailleMot)
         playerThread(c,addr,tailleMot)
     elif msg in "CODE002":
-        compteurJoueur+=1
-        print(compteurJoueur)
-        if compteurJoueur < 2:
-            broadcast("En attente d'un deuxième joueur")
-            twoPlayerThread(c,addr)
-        elif compteurJoueur == 2:
-            broadcast("Deux joueurs sont rentrés: vous pouvez jouer\n")
+        if(lancerLaPartie==0):
+            countdown(2)
+            compteurJoueur+=1
+            print(compteurJoueur)
+            broadcast("En attente de joueurs")
+            joiningMessage = str(addr[1])+" a rejoint la partie"
+            broadcast(joiningMessage)
+
             twoPlayerThread(c,addr)
         else:
-            broadcast("Vous êtes plus de deux joueurs")
+            sendToPort(c,"En attente de joueurs",addr[1])
     elif msg.find("CODE003")!=-1:
         print(msg)
         pseudo = msg.split(":")[1]

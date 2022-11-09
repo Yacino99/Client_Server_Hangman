@@ -1,6 +1,6 @@
 #Fichier contenant nos fonctions
 
-
+import random
 
 def sendToPort(socket, msg, port):
     socket.sendto(bytes(msg,'utf-8'), ("127.0.0.1",int(port)))
@@ -135,3 +135,19 @@ def lettreTrouve(wordSecret, correctLetters):
     for letter in blanks:
         res+=" "+letter
     return res
+
+
+def importMotFichier(n):
+    liste_mots = []
+    with open('mots.txt') as f:
+        for line in f.readlines():
+            if(len(line) == n):
+                liste_mots.append(line)
+    taille_liste = len(liste_mots)
+    mot_choisi = liste_mots[random.randint(0, taille_liste-1)] 
+    return mot_choisi.lower()
+
+
+mot = importMotFichier(10)
+
+print(mot)

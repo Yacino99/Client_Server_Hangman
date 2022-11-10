@@ -9,6 +9,8 @@ compteurJoueur=0
 lancerLaPartie=0
 partieDejaLance=0
 
+
+
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
 port = int(sys.argv[1])

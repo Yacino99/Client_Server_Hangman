@@ -7,7 +7,6 @@ from utils import *
 import time
 compteurJoueur=0
 lancerLaPartie=0
-partieDejaLance=0
 
 
 
@@ -163,16 +162,23 @@ def playerThread(c, port, tailleMot):
     gagne = False
     lost = False
     messageQuitter  = "Votre mot était: "+wordSelected+"\nappuyer sur ENTRER pour quitter"
-
     while (nbVie > 0 and not gagne)or lost:
         msg = c.recv(1024)
+        if not msg:
+            c.close()
+            sys.exit()
+
         msg = msg.decode()
+
+      
+
         print("le client "+str(port)+" a envoyé : ",msg)
         msg = msg.lower()
         #Verifier la chaine de charactère
         if len(msg)  == 0:
             print("Le client veut partir")
             # n'arrive que si le client est parti
+            c.close()
             break
         elif len(msg) == 1 and msg.isalpha():  #test si c'est un char
             #Cas ou y a un seul charactère 
@@ -208,6 +214,7 @@ def playerThread(c, port, tailleMot):
             if msg == wordSelected:
                 #win
                 send(c,"Vous avez gagné ! Bravo ! "+messageQuitter)
+                
                 gagne = True
             else:
                 send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
@@ -223,10 +230,15 @@ def playerThread(c, port, tailleMot):
             break
     if(nbVie > 0 and not lost):
         print("le client a gagné la partie et a fini de jouer")
-    
+        print(msg)
+        nbVie = 7
+        gagne = 1
+        lost = 0
+        playerThread(c,addr,tailleMot)
+            
     else:
         print("le client a perdu la partie et a fini de jouer")
-
+       
 
 def playAgainstServer(c,addr,motCacheDuServeur):
     #Message de présentation du jeu
@@ -234,48 +246,68 @@ def playAgainstServer(c,addr,motCacheDuServeur):
     send(c,MessageDebut)
 
 
+#Fonction qui reset les variable dans le but de pouvoir rejouer.
+def reset():
+    global lancerLaPartie
+    lancerLaPartie=0
+
 
 
 def checker(c,addr):
     global compteurJoueur
-    msg = c.recv(1024)
-    msg = msg.decode()
-    if msg.find("CODE001")!=-1:
-        tailleMot = msg.split(":")[1]
-        print(tailleMot)
-        playerThread(c,addr,tailleMot)
-    elif msg in "CODE002":
-        if(lancerLaPartie==0):
-            countdown(5)
-            compteurJoueur+=1
-            print(compteurJoueur)
-            broadcast("En attente de joueurs")
-            joiningMessage = str(addr[1])+" a rejoint la partie"
-            broadcast(joiningMessage)
+    try:
+        msg = c.recv(1024)
+    except:
+        c.close()
+        sys.exit()
 
-            twoPlayerThread(c,addr)
-        else:
-            sendToPort(c,"En attente de joueurs",addr[1])
-    elif msg.find("CODE003")!=-1:
-        print(msg)
-        pseudo = msg.split(":")[1]
-        chatThread(c,addr,pseudo)
-    elif msg.find("CODE004")!=-1:
-        print(msg)
-        motCacheDuServeur = msg.split(":")[1]
-        playAgainstServer(c,addr,motCacheDuServeur)
-    if len(msg) == 0:
-        s.close()
-        clients.remove(s)
+    if not msg:
+        c.close()
+        sys.exit()
+    else:
+        msg = msg.decode()
+        if msg.find("CODE001")!=-1:
+            tailleMot = msg.split(":")[1]
+            playerThread(c,addr,tailleMot)
+        elif msg in "CODE002":
+            if(lancerLaPartie==0):
+                countdown(5)
+                compteurJoueur+=1
+                print(compteurJoueur)
+                broadcast("En attente de joueurs")
+                joiningMessage = str(addr[1])+" a rejoint la partie"
+                broadcast(joiningMessage)
+                twoPlayerThread(c,addr)
+            else:
+                sendToPort(c,"En attente de joueurs",addr[1])
+        elif msg.find("CODE003")!=-1:
+            print(msg)
+            pseudo = msg.split(":")[1]
+            chatThread(c,addr,pseudo)
+        elif msg.find("CODE004")!=-1:
+            print(msg)
+            motCacheDuServeur = msg.split(":")[1]
+            playAgainstServer(c,addr,motCacheDuServeur)
+        if len(msg) == 0:
+            c.close()
+            clients.remove(c)
 
 
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:
+        print(s.fileno())
         if s == mysocket:
             (socketclient,addr) = mysocket.accept()
             clients.append(socketclient)
-            start_new_thread(checker, (socketclient,addr))
+            try:
+                start_new_thread(checker, (socketclient,addr))
+            except:
+                clients.remove(socketclient)
+
+        if(s.fileno()<0):
+            clients.remove(s)
+            s.close()
 for z in clients:
     z.close()
 

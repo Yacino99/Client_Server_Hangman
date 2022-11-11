@@ -22,7 +22,7 @@ def menu(socket):
                 send(socket,"CODE001:"+tailleMot)
             rep = None
         elif rep=="2":
-            print("\n Pendu 2J")
+            print("\n Pendu NJ")
             send(socket,"CODE002")
             rep = None
         elif rep=="3":

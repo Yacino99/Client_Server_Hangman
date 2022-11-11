@@ -5,6 +5,7 @@ import select
 from _thread import *
 from utils import *
 import time
+import datetime
 compteurJoueur=0
 lancerLaPartie=0
 
@@ -146,23 +147,16 @@ def playerThread(c, port, tailleMot):
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
-
     wordSelected = importMotFichier(tailleMot)
     print("Le mot que le client doit trouver est :"+wordSelected)
     #Tampon pour le mot "gagnant"
     tampon = wordSelected
-
     #Lettres valide utilisés
     alreadyUsedLetter = ""
     #Toutes les lettres utilisés
     clientCharsSoFar = ""
-
     #Nombre de vie du client
     nbVie = 7
-    gagne = False
-    lost = False
-
-
     messageQuitter  = "Votre mot était: "+wordSelected+"\nEnvoyer REPLAY pour rejouer, exit pour quitter"
     while True:
         msg = c.recv(1024)
@@ -224,6 +218,11 @@ def playAgainstServer(c,addr,motCacheDuServeur):
 
 
 
+def addSecs(tm, secs):
+    fulldate = datetime.datetime(100,1,1,tm.hour,tm.minute,tm.second)
+    fulldate = fulldate + datetime.timedelta(seconds=secs)
+    return fulldate.time()
+
 
 def checker(c,addr):
     global compteurJoueur
@@ -243,12 +242,13 @@ def checker(c,addr):
             playerThread(c,addr,tailleMot)
         elif msg in "CODE002":
             if(lancerLaPartie==0):
-                countdown(5)
-                compteurJoueur+=1
-                print(compteurJoueur)
-                broadcast("En attente de joueurs. \nTemps avant début de la partie: "+countdown+s)
+                tempsCompteur = 5
+                tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
+                sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
+                +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
                 joiningMessage = str(addr[1])+" a rejoint la partie"
                 broadcast(joiningMessage)
+                countdown(tempsCompteur)
                 twoPlayerThread(c,addr)
             else:
                 sendToPort(c,"En attente de joueurs",addr[1])

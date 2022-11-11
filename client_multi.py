@@ -4,8 +4,7 @@ from utils import *
 from _thread import *
 if len(sys.argv) != 3:
     sys.exit(-1)
-
-
+quit = 0    
 def menu(socket):
     rep=True
     while rep:
@@ -18,8 +17,7 @@ def menu(socket):
         rep=input("Que voulez-vous faire? ")
         if rep=="1":
             print("\nPendu 1J")
-            tailleMot = input("Veuillez choisir la taille du mot")
-            
+            tailleMot = input("Veuillez choisir la taille du mot: ")
             if tailleMot:
                 send(socket,"CODE001:"+tailleMot)
             rep = None
@@ -53,26 +51,34 @@ s.connect((host, port))
 
 
 def Sending(c):
+    global quit
     while True:
         message = input("> ")
-        if(message.strip() == "exit" or message.strip() == ""):
-            print("au revoir")
-            s.close()
-            #break
-        message_bytes = bytes(message, "utf-8")
-        sent = s.send(message_bytes)
+        if(message.strip() == "exit"):
+            print("Au revoir")
+            quit = 1
+            sys.exit()
+        else:
+            message_bytes = bytes(message, "utf-8")
+            c.send(message_bytes)
 
 menu(s)
 compteur = 0
 while True:
-    try:
-        message_recu = s.recv(1000)
-        message_recu = str(message_recu,'utf-8')
-        print(message_recu)
-        if compteur == 0:
-            start_new_thread(Sending, (s,))
-            compteur+=1
-    except:
-        continue
-   
-s.close()
+    if(quit==0):
+        try:
+            message_recu = s.recv(1000)
+            if not message_recu:
+                s.close()
+                sys.exit()
+            message_recu = str(message_recu,'utf-8')
+            if(message_recu):
+                print(message_recu)
+            if compteur == 0:
+                thread = start_new_thread(Sending, (s,))
+                compteur+=1
+        except:
+            continue
+    else:
+        s.close()
+        sys.exit()

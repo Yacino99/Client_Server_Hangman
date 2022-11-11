@@ -161,95 +161,67 @@ def playerThread(c, port, tailleMot):
     nbVie = 7
     gagne = False
     lost = False
-    messageQuitter  = "Votre mot était: "+wordSelected+"\nappuyer sur ENTRER pour quitter"
-    while (nbVie > 0 and not gagne)or lost:
+
+
+    messageQuitter  = "Votre mot était: "+wordSelected+"\nEnvoyer REPLAY pour rejouer, exit pour quitter"
+    while True:
         msg = c.recv(1024)
         if not msg:
             c.close()
             sys.exit()
-
         msg = msg.decode()
-
-      
-
-        print("le client "+str(port)+" a envoyé : ",msg)
-        msg = msg.lower()
-        #Verifier la chaine de charactère
-        if len(msg)  == 0:
-            print("Le client veut partir")
-            # n'arrive que si le client est parti
-            c.close()
-            break
-        elif len(msg) == 1 and msg.isalpha():  #test si c'est un char
-            #Cas ou y a un seul charactère 
-            print ("Tu as envoye un charatères : ",msg)
-            #Liste des char déjà utilisé
-            if msg not in alreadyUsedLetter and msg in wordSelected:
-            #Bingo: bonne lettre
-                MessageWin = "Bien joué! Vous avez trouver une lettre "
-                clientCharsSoFar += msg
-                tampon = tampon.replace(msg,"")
-                alreadyUsedLetter+=msg
-                print("tampon : "+tampon)
-                if tampon=="":
-                    send(c,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
-                    gagne = True
-                MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
-                MessageWin +=" Pendu : Vie restante: "
-                MessageWin += str(nbVie)+"\n"
-                MessageWin += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
-                send(c,MessageWin)
-            else:
-                #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
-                clientCharsSoFar+=msg
-                nbVie -=1
-                if(nbVie <= 0):
-                    lost = True
-                    send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
-                    break
-                else:
-                    send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
-        elif len(msg) == len(wordSelected):
-            #Cas ou c'est un test
-            if msg == wordSelected:
-                #win
-                send(c,"Vous avez gagné ! Bravo ! "+messageQuitter)
-                
-                gagne = True
-            else:
-                send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
-                lost = True
-                break
+        #Si message = REPLAY on rejoue
+        if msg.find("REPLAY")!=-1:
+            playerThread(c,port,tailleMot)
+        #Sinon jeu du pendu
         else:
-            send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)
-            lost = True
-            #Cas ou il faut renvoyer la demande de char
-            break
-        if nbVie <= 0:
-            send(c,"\nyou died, hasta la vista baby "+messageQuitter)
-            break
-    if(nbVie > 0 and not lost):
-        print("le client a gagné la partie et a fini de jouer")
-        print(msg)
-        nbVie = 7
-        gagne = 1
-        lost = 0
-        playerThread(c,addr,tailleMot)
-            
-    else:
-        print("le client a perdu la partie et a fini de jouer")
-       
+            print("le client "+str(port)+" a envoyé : ",msg)
+            msg = msg.lower()
+            #Cas ou y a un seul charactère 
+            if len(msg) == 1 and msg.isalpha():
+                #Liste des char déjà utilisé
+                #Bingo: bonne lettre
+                if msg not in alreadyUsedLetter and msg in wordSelected:
+                    MessageWin = "Bien joué! Vous avez trouver une lettre "
+                    clientCharsSoFar += msg
+                    tampon = tampon.replace(msg,"")
+                    alreadyUsedLetter+=msg
+                    print("tampon : "+tampon)
+                    #Si tampon vide, gain de la partie
+                    if tampon=="":
+                        send(c,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
+                    else:
+                        MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
+                        MessageWin +=" Pendu : Vie restante: "
+                        MessageWin += str(nbVie)+"\n"
+                        MessageWin += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
+                        send(c,MessageWin)
+                else:
+                    #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
+                    clientCharsSoFar+=msg
+                    nbVie -=1
+                    if(nbVie <= 0):
+                        #lost = True
+                        send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
+                        #break
+                    else:
+                        send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
+            elif len(msg) == len(wordSelected) and msg != "REPLAY":
+                #Cas ou c'est un test
+                if msg == wordSelected:
+                    #win
+                    send(c,"Vous avez gagné ! Bravo ! "+messageQuitter)
+                else:
+                    send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
+            else:
+                if(msg!="REPLAY"):
+                    send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)       
 
 def playAgainstServer(c,addr,motCacheDuServeur):
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez me laisser deviner votre mot!"
     send(c,MessageDebut)
 
-
-#Fonction qui reset les variable dans le but de pouvoir rejouer.
-def reset():
-    global lancerLaPartie
-    lancerLaPartie=0
 
 
 
@@ -274,7 +246,7 @@ def checker(c,addr):
                 countdown(5)
                 compteurJoueur+=1
                 print(compteurJoueur)
-                broadcast("En attente de joueurs")
+                broadcast("En attente de joueurs. \nTemps avant début de la partie: "+countdown+s)
                 joiningMessage = str(addr[1])+" a rejoint la partie"
                 broadcast(joiningMessage)
                 twoPlayerThread(c,addr)
@@ -296,7 +268,7 @@ def checker(c,addr):
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:
-        print(s.fileno())
+        #print(s.fileno())
         if s == mysocket:
             (socketclient,addr) = mysocket.accept()
             clients.append(socketclient)

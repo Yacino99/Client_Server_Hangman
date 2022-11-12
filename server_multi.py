@@ -37,6 +37,9 @@ def chatThread(socket,addr, pseudo):
     send(socket,MessageDebut)
     while True:
         msg = socket.recv(1024)
+        if not msg:
+            socket.close()
+            sys.exit()
         msg = msg.decode()
         print(msg)
         message = pseudo+":"

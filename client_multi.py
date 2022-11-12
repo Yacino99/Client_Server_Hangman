@@ -17,10 +17,13 @@ def menu(socket):
         rep=input("Que voulez-vous faire? ")
         if rep=="1":
             print("\nPendu 1J")
-            tailleMot = input("Veuillez choisir la taille du mot: ")
-            if tailleMot:
+            tailleMot = input("Veuillez choisir la taille du mot entre 3 et 9: ")
+            if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
                 send(socket,"CODE001:"+tailleMot)
-            rep = None
+                rep = None
+            else: 
+                print("Veuillez entrer une taille valide (entre 3 et 9 compris\n")
+                rep = 1
         elif rep=="2":
             print("\n Pendu NJ")
             send(socket,"CODE002")

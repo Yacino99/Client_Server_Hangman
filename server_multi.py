@@ -8,8 +8,10 @@ import time
 import datetime
 compteurJoueur=0
 lancerLaPartie=0
-
-
+lobby = 0
+hostGame = 0
+tempsDebutPartie = 0
+host = 0
 
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
@@ -42,19 +44,17 @@ def chatThread(socket,addr, pseudo):
         print(messageTest)
         broadcast(messageTest)
 
-def countdown(num_of_secs):
-    global lancerLaPartie
-    while num_of_secs:
-        m, s = divmod(num_of_secs, 60)
-        min_sec_format = '{:02d}:{:02d}'.format(m, s)
-        print(min_sec_format, end='/r')
-        time.sleep(1)
-        num_of_secs -= 1
-    lancerLaPartie = 1
-    print('Lancer la partie!.')
+
 
 def twoPlayerThread(c, port):
-    if lancerLaPartie:
+    global host
+    #Attente de la fin du compteur pour le début de la partie
+    while True:
+        if host == 5:
+            print(host)
+            break
+
+    if host == 5:
         print("twoPlayerThread")
         MessageDebut = "Bienvenu sur le jeu du Pendu en version 2 joueurs! Veuillez saisir un char pour jouer au Pendu!"
         send(c,MessageDebut)
@@ -144,6 +144,8 @@ def twoPlayerThread(c, port):
 
 
 def playerThread(c, port, tailleMot):
+    
+    
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
     send(c,MessageDebut)
@@ -223,9 +225,27 @@ def addSecs(tm, secs):
     fulldate = fulldate + datetime.timedelta(seconds=secs)
     return fulldate.time()
 
+def countdown(num_of_secs):
+    global lancerLaPartie
+    global host
+    global hostGame
+    hostGame = 1
+    while num_of_secs:
+        m, s = divmod(num_of_secs, 60)
+        min_sec_format = '{:02d}:{:02d}'.format(m, s)
+        print(min_sec_format, end='/r')
+        time.sleep(1)
+        num_of_secs -= 1
+    lancerLaPartie = 1
+    host = 5
+    print('Lancer la partie!.')
+
 
 def checker(c,addr):
-    global compteurJoueur
+    global lancerLaPartie
+    global hostGame
+    global tempsDebutPartie
+    global tempsCompteur
     try:
         msg = c.recv(1024)
     except:
@@ -241,17 +261,26 @@ def checker(c,addr):
             tailleMot = msg.split(":")[1]
             playerThread(c,addr,tailleMot)
         elif msg in "CODE002":
-            if(lancerLaPartie==0):
-                tempsCompteur = 5
-                tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
-                sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
-                +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
-                joiningMessage = str(addr[1])+" a rejoint la partie"
-                broadcast(joiningMessage)
-                countdown(tempsCompteur)
-                twoPlayerThread(c,addr)
+            #Etape1: Rejoindre le lobby
+            if lancerLaPartie == 0:
+                if hostGame == 0:
+                    #Si le host join la game
+                    #On créé le compteur, pour commencer la partie
+                    tempsCompteur = 5
+                    tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
+                    sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
+                    +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
+                    countdown(tempsCompteur)
+                    twoPlayerThread(c,addr)
+                    hostGame=1
+                elif hostGame ==1:
+                    joiningMessage = str(addr[1])+" a rejoint la partie\n"
+                    sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
+                    +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
+                    broadcast(joiningMessage)
+                    twoPlayerThread(c,addr)
             else:
-                sendToPort(c,"En attente de joueurs",addr[1])
+                sendToPort(c,"La partie est déjà lancé!",addr[1])
         elif msg.find("CODE003")!=-1:
             print(msg)
             pseudo = msg.split(":")[1]

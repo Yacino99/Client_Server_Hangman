@@ -12,7 +12,8 @@ def menu(socket):
         1.Jouer au pendu 1 Joueur
         2.Jouer au pendu N joueurs
         3.Chat
-        4.Exit/Quit
+        4.Jouer contre le serveur
+        5.Exit/Quit
         """)
         rep=input("Que voulez-vous faire? ")
         if rep=="1":

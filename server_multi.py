@@ -13,8 +13,7 @@ hostGame = 0
 tempsDebutPartie = 0
 host = 0
 compteurFini = 0
-
-
+viePartieGagnante = -100
 
 def resetVariables():
     global compteurJoueur
@@ -24,6 +23,7 @@ def resetVariables():
     global tempsDebutPartie
     global host
     global compteurFini
+    global viePartieGagnante
     compteurJoueur = 0
     lancerLaPartie = 0
     lobby = 0
@@ -31,17 +31,25 @@ def resetVariables():
     tempsDebutPartie = 0
     host = 0
     compteurFini = 0
+    viePartieGagnante = -100
 
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
 port = int(sys.argv[1])
 mysocket.bind(('',port))
 mysocket.listen(1)
+clientsNJ=[mysocket]
 
 clients=[mysocket]
 T = True
 def broadcast(msg):
     for client in clients:
+        if client != mysocket:
+            send(client,str(msg))
+
+
+def broadcastListe(liste, msg):
+    for client in liste:
         if client != mysocket:
             send(client,str(msg))
 
@@ -65,7 +73,7 @@ def chatThread(socket,addr, pseudo):
         messageTest = message+msg
         print(messageTest)
         broadcast(messageTest)
-def menu(c, port, vie):
+def menu(c, port):
     resetVariables()
     send(c,"""\n
             1.Jouer au pendu 1 Joueur
@@ -75,10 +83,13 @@ def menu(c, port, vie):
             5.Exit/Quit
             """)
     while True:
-
         msg = c.recv(1024)
         msg = msg.decode()
-        rep = msg            
+        rep = msg         
+
+        if not msg:
+            c.close()
+            sys.exit()
         if rep=="1":
             print("\nPendu 1J")
             checker2(c,port,"CODE001")
@@ -100,27 +111,35 @@ def menu(c, port, vie):
             
         elif rep=="5":
             print("\n Quitter") 
-            rep = None
-            socket.close()
-            break
+            send(c,"quitter")
         else:
             send(c,"\n Veuillez selectionner un choix valide")
     
 
-def endGame(c,port, vie):
+
+
+
+def endGame(c,port, vie, gagne):
     global compteurFini
     global compteurJoueur
+    global viePartieGagnante
     compteurFini+=1
     print("endGame")
     send(c,"\nEn attente que les joueurs aient finit leur partie eux aussi...")
     while True:
         if(compteurFini==compteurJoueur):
-            print("on lance le menu")
-            print(str(port)+" avait "+str(vie)+" vie(s)")
-            menu(c,port,vie)
+            if gagne == 0:
+                sendToPort(c,"\nVous avez perdu la partie",str(port[1]))
+            elif gagne == 1:
+                sendToPort(c,"\n"+str(port[1])+" ,vous avez trouvé le bon mot, il vous restait: "+str(vie)+" vie",port[1])
+            if viePartieGagnante==vie:
+                broadcast("\nLe joueur "+str(port[1])+"a gagné la partie")
+            time.sleep(5)
+            menu(c,port)
 
 def twoPlayerThread(c, port):
     global host
+    global viePartieGagnante
     #Attente de la fin du compteur pour le début de la partie
     while True:
         if host == 1:
@@ -164,7 +183,10 @@ def twoPlayerThread(c, port):
                     if tampon=="":
                         send(c,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected)
                         #gagne = True
-                        endGame(c,port,nbVie)
+                        if(nbVie>viePartieGagnante):
+                            viePartieGagnante = nbVie
+                            print(viePartieGagnante)
+                        endGame(c,port,nbVie, 1)
                     MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
                     MessageWin +=" Pendu : Vie restante: "
                     MessageWin += str(nbVie)+"\n"
@@ -177,7 +199,7 @@ def twoPlayerThread(c, port):
                     if(nbVie <= 0):
                         lost = True
                         send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu))
-                        endGame(c,port,nbVie)
+                        endGame(c,port,nbVie, 0)
                     else:
                         send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
             elif len(msg) == len(wordSelected):
@@ -186,16 +208,20 @@ def twoPlayerThread(c, port):
                     #win
                     send(c,"Vous avez gagné ! Bravo !")
                   #  gagne = True
-                    endGame(c,port,nbVie)
+                    if(nbVie>viePartieGagnante):
+                        viePartieGagnante = nbVie
+                    endGame(c,port,nbVie, 1)
                 else:
                     send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. ")
+                    nbVie = 0
                    # lost = True
-                    endGame(c,port,nbVie)
+                    endGame(c,port,nbVie, 0)
             else:
                 send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché ")
                # lost = True
                 #Cas ou il faut renvoyer la demande de char
-                endGame(c,port,nbVie)
+                nbVie = 0
+                endGame(c,port,nbVie, 0)
 
 
 
@@ -314,10 +340,10 @@ def checker2(c,addr,CODE):
     else:
         msg = msg.decode()
         if CODE == "CODE001":
-            #tailleMot = msg.split(":")[1]
             playerThread(c,addr,6)
         elif CODE == "CODE002":
             compteurJoueur+=1
+            clientsNJ.append(c)
             #Etape1: Rejoindre le lobby
             if lancerLaPartie == 0:
                 if hostGame == 0:

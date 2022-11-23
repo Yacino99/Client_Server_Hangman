@@ -76,7 +76,9 @@ while True:
                 s.close()
                 sys.exit()
             message_recu = str(message_recu,'utf-8')
-            if(message_recu):
+            if(message_recu in "quitter"):
+                quit = 1
+            elif message_recu:
                 print(message_recu)
             if compteur == 0:
                 thread = start_new_thread(Sending, (s,))

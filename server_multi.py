@@ -133,7 +133,7 @@ def endGame(c,port, vie, gagne):
             elif gagne == 1:
                 sendToPort(c,"\n"+str(port[1])+" ,vous avez trouvé le bon mot, il vous restait: "+str(vie)+" vie",port[1])
             if viePartieGagnante==vie:
-                broadcast("\nLe joueur "+str(port[1])+"a gagné la partie")
+                broadcast("\nLe joueur "+str(port[1])+" a gagné la partie")
             time.sleep(5)
             menu(c,port)
 

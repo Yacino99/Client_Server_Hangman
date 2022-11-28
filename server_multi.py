@@ -127,6 +127,8 @@ def endGame(c,port, vie, gagne):
 def twoPlayerThread(c, port):
     global host
     global viePartieGagnante
+    global compteurJoueur
+
     #Attente de la fin du compteur pour le début de la partie
     while True:
         if host == 1:
@@ -151,9 +153,15 @@ def twoPlayerThread(c, port):
         nbVie = 7
         gagne = False
         lost = False
-        while (nbVie > 0 and not gagne)or lost:
+        while True:
             msg = c.recv(1024)
+            if not msg:
+                compteurJoueur-=1
+                c.close()
+                sys.exit()
+
             msg = msg.decode()
+
             print("le client "+str(port)+" a envoyé : ",msg)
             msg = msg.lower()
             if len(msg) == 1 and msg.isalpha():  #test si c'est un char

@@ -151,8 +151,6 @@ def twoPlayerThread(c, port):
         clientCharsSoFar = ""
         #Nombre de vie du client
         nbVie = 7
-        gagne = False
-        lost = False
         while True:
             msg = c.recv(1024)
             if not msg:

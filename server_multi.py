@@ -42,6 +42,8 @@ clientsNJ=[mysocket]
 
 clients=[mysocket]
 T = True
+
+#Envoie un message a tout les sockets connectés
 def broadcast(msg):
     for client in clients:
         if client != mysocket:
@@ -49,26 +51,35 @@ def broadcast(msg):
 
 
 
+#Supprime une connection au socket
 def remove(connection):
     if connection in clients:
         clients.remove(connection)
 
+
+#Fonction gérant le chat
 def chatThread(socket,addr, pseudo):
     print("chatThread: "+pseudo)
     MessageDebut = "Bienvenu sur notre chat! Votre pseudo est: "+pseudo+"\n"
     send(socket,MessageDebut)
     while True:
         msg = socket.recv(1024)
+        #Si not msg, on ferme le socket.
         if not msg:
             socket.close()
             sys.exit()
         msg = msg.decode()
-        print(msg)
+        #Parsing du message
         message = pseudo+":"
         messageTest = message+msg
-        print(messageTest)
+
+        print(str(addr[0])+"a envoyé:"+messageTest)
+        #Broadcast du message
         broadcast(messageTest)
+
+#Menu gèrer côté serveur pour gérer le replay multijoueurs
 def menu(c, port):
+    #On reset toute les variables
     resetVariables()
     send(c,"""\n
             1.Jouer au pendu 1 Joueur
@@ -105,7 +116,7 @@ def menu(c, port):
 
 
 
-
+#Gestion d'une fin de partie multijoueur
 def endGame(c,port, vie, gagne):
     global compteurFini
     global compteurJoueur
@@ -114,16 +125,23 @@ def endGame(c,port, vie, gagne):
     print("endGame")
     send(c,"\nEn attente que les joueurs aient finit leur partie eux aussi...")
     while True:
+        #Si tout les joueurs ont finit leur parties
         if(compteurFini==compteurJoueur):
+            #Cas ou il n'a pas trouvé le mot
             if gagne == 0:
                 sendToPort(c,"\nVous avez perdu la partie",str(port[1]))
+            #Cas ou il a trouvé le mot
             elif gagne == 1:
                 sendToPort(c,"\n"+str(port[1])+" ,vous avez trouvé le bon mot, il vous restait: "+str(vie)+" vie",port[1])
+            #Cas ou il a trouvé le mot, et qu'il a le nombre de vie mini
             if viePartieGagnante==vie:
                 broadcast("\nLe joueur "+str(port[1])+" a gagné la partie")
             time.sleep(5)
+            #Retour au menu
             menu(c,port)
 
+
+#Fonction gèrant les N joueurs sur une partie
 def twoPlayerThread(c, port):
     global host
     global viePartieGagnante
@@ -134,6 +152,7 @@ def twoPlayerThread(c, port):
         if host == 1:
             print(host)
             break
+    #Fin du compteur: la partie peut débuter
     if host == 1:
         print("twoPlayerThread")
         MessageDebut = "Bienvenu sur le jeu du Pendu en version 2 joueurs! Veuillez saisir un char pour jouer au Pendu!"
@@ -175,10 +194,11 @@ def twoPlayerThread(c, port):
                     print("tampon : "+tampon)
                     if tampon=="":
                         send(c,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected)
-                        #gagne = True
+                        #Un minimum > 0 globale pour déterminer le gagnant
                         if(nbVie>viePartieGagnante):
                             viePartieGagnante = nbVie
                             print(viePartieGagnante)
+                        #Fonction fin de partie
                         endGame(c,port,nbVie, 1)
                     MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
                     MessageWin +=" Pendu : Vie restante: "
@@ -190,7 +210,6 @@ def twoPlayerThread(c, port):
                     clientCharsSoFar+=msg
                     nbVie -=1
                     if(nbVie <= 0):
-                        lost = True
                         send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu))
                         endGame(c,port,nbVie, 0)
                     else:
@@ -200,25 +219,22 @@ def twoPlayerThread(c, port):
                 if msg == wordSelected:
                     #win
                     send(c,"Vous avez gagné ! Bravo !")
-                  #  gagne = True
                     if(nbVie>viePartieGagnante):
                         viePartieGagnante = nbVie
                     endGame(c,port,nbVie, 1)
                 else:
                     send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. ")
                     nbVie = 0
-                   # lost = True
                     endGame(c,port,nbVie, 0)
             else:
                 send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché ")
-               # lost = True
                 #Cas ou il faut renvoyer la demande de char
                 nbVie = 0
                 endGame(c,port,nbVie, 0)
 
 
 
-
+#Gestion du serveur pendu pour N joueur, partie non multijoueur
 def playerThread(c, port, tailleMot):    
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
@@ -289,7 +305,7 @@ def playerThread(c, port, tailleMot):
 
 
 
-
+#Compte a rebours
 def countdown(num_of_secs):
     global lancerLaPartie
     global host
@@ -305,7 +321,7 @@ def countdown(num_of_secs):
     host = 1
     print('Lancer la partie!.')
 
-
+#Fonction checker2 pour la gestion du CODE du menu côté serveur
 def checker2(c,addr,CODE):
     global lancerLaPartie
     global hostGame
@@ -356,6 +372,7 @@ def checker2(c,addr,CODE):
             clients.remove(c)
 
 
+#fonction qui envoie les sockets vers différents mode de jeu
 def checker(c,addr):
     global lancerLaPartie
     global hostGame
@@ -407,6 +424,7 @@ def checker(c,addr):
             clients.remove(c)
 
 
+#Boucle initial pour la liaison des sockets
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:

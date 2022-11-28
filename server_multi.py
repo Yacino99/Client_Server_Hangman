@@ -73,7 +73,7 @@ def chatThread(socket,addr, pseudo):
         message = pseudo+":"
         messageTest = message+msg
 
-        print(str(addr[0])+"a envoyé:"+messageTest)
+        print(str(addr[1])+":"+messageTest)
         #Broadcast du message
         broadcast(messageTest)
 

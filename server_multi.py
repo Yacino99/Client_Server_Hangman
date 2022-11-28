@@ -48,11 +48,6 @@ def broadcast(msg):
             send(client,str(msg))
 
 
-def broadcastListe(liste, msg):
-    for client in liste:
-        if client != mysocket:
-            send(client,str(msg))
-
 
 def remove(connection):
     if connection in clients:
@@ -79,8 +74,7 @@ def menu(c, port):
             1.Jouer au pendu 1 Joueur
             2.Jouer au pendu N joueurs
             3.Chat
-            4.Jouer contre le serveur
-            5.Exit/Quit
+            4.Exit/Quit
             """)
     while True:
         msg = c.recv(1024)
@@ -100,16 +94,9 @@ def menu(c, port):
             break
         elif rep=="3":
             print("\n Chat")
-            #print(str(port[1]))
-            #checker2(c,port,"CODE003"+":"+str(port[1]))
             checker2(c,port,"CODE003")
-            break
+            break            
         elif rep=="4":
-            print("\n Jouer contre le serveur")
-            motCaches = input("Veuillez choisir le mot que le serveur doit deviner\n")
-            send(socket,"CODE004"+":"+motCaches)
-            
-        elif rep=="5":
             print("\n Quitter") 
             send(c,"quitter")
         else:
@@ -294,17 +281,8 @@ def playerThread(c, port, tailleMot):
                 if(msg!="REPLAY"):
                     send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)       
 
-def playAgainstServer(c,addr,motCacheDuServeur):
-    #Message de présentation du jeu
-    MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez me laisser deviner votre mot!"
-    send(c,MessageDebut)
 
 
-
-def addSecs(tm, secs):
-    fulldate = datetime.datetime(100,1,1,tm.hour,tm.minute,tm.second)
-    fulldate = fulldate + datetime.timedelta(seconds=secs)
-    return fulldate.time()
 
 def countdown(num_of_secs):
     global lancerLaPartie
@@ -367,10 +345,6 @@ def checker2(c,addr,CODE):
         elif CODE == "CODE003":
             print(msg)
             chatThread(c,addr,str(addr[1]))
-        elif CODE.find("CODE004")!=-1:
-            print(msg)
-            motCacheDuServeur = msg.split(":")[1]
-            playAgainstServer(c,addr,motCacheDuServeur)
         if len(msg) == 0:
             c.close()
             clients.remove(c)
@@ -422,10 +396,6 @@ def checker(c,addr):
             print(msg)
             pseudo = msg.split(":")[1]
             chatThread(c,addr,pseudo)
-        elif msg.find("CODE004")!=-1:
-            print(msg)
-            motCacheDuServeur = msg.split(":")[1]
-            playAgainstServer(c,addr,motCacheDuServeur)
         if len(msg) == 0:
             c.close()
             clients.remove(c)
@@ -434,7 +404,6 @@ def checker(c,addr):
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:
-        #print(s.fileno())
         if s == mysocket:
             (socketclient,addr) = mysocket.accept()
             clients.append(socketclient)
@@ -442,7 +411,6 @@ while T:
                 start_new_thread(checker, (socketclient,addr))
             except:
                 clients.remove(socketclient)
-
         if(s.fileno()<0):
             clients.remove(s)
             s.close()

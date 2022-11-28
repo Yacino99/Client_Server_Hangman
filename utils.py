@@ -1,6 +1,13 @@
 #Fichier contenant nos fonctions
 
 import random
+import datetime
+
+
+def addSecs(tm, secs):
+    fulldate = datetime.datetime(100,1,1,tm.hour,tm.minute,tm.second)
+    fulldate = fulldate + datetime.timedelta(seconds=secs)
+    return fulldate.time()
 
 def sendToPort(socket, msg, port):
     socket.sendto(bytes(msg,'utf-8'), ("127.0.0.1",int(port)))

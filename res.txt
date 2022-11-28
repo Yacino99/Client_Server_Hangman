@@ -1,0 +1,238 @@
+1. Quel service est rendu par le serveur ?
+Le serveur accepte plusieurs sockets.
+A chaque connexion entre le serveur et le socket,
+un thread d'une fonction "CHECK" est créé.
+La fonction CHECK interceptionne ce que le client veut faire.
+2. Que demande le client ?
+Le client se connecte au serveur, et envoie un CODE au serveur en fonction de ce qu'il veut faire
+(CODE001 = serveur pendu, CODE002 = partie multijoueur pour le jeu du pendu, CODE003 = chat)
+3. Que répondra le serveur à la demande du client ?
+Le serveur intercepte les messages du client, et renvoie les informations concernant le jeu actuellement en train d'être joue
+4.Qu’est-ce qui est donc à la charge du serveur ?
+_Réceptionner les message du client -> analyse d'un message reçu, puis renvoi d'un message
+_Gérer le chat (fonctionnalité ajouté) -> broadcast un message reçu
+_Gérer les clients entrant/sortant
+5. Qui du serveur ou du client fixe les règles du jeu ?
+Le serveur fixe les règles du jeu du pendu
+Cependant le client peut choisir des paramètres, comme la taille du mot, ou son pseudo.
+6. Définir la structure et les champs d’un message envoyé par le client.
+Dans un premier temps, à la connexion
+CODE001:N pour jouer à un pendu de taille N
+CODE002 pour jouer à un pendu de taille quelconque, en multijoueur
+CODE003:X pour entrer dans un chat avec X comme pseudo
+7. Définir la structure et les champs d’un message envoyé par le serveur.
+exit: le client se déconnecte
+string de taille du mot: test si c'est le bon mot, si oui gagné, si non perdu
+string de taille 1: test une lettre pour le pendu, si oui ajout d'une lettre dans le pendu, si non perte d'une vie.
+string de taille autre que 1 ou du mot: le client a perdu
+8. Elaborer la séquencement des messages échangés entre le client et le serveur
+
+Menu côté client:
+1.Jouer au pendu 1 Joueur
+2.Jouer au pendu N joueurs
+3.Chat
+4.Jouer contre le serveur
+5.Exit/Quit
+        
+Que voulez-vous faire? 1
+Veuillez choisir la taille du mot entre 3 et 9: 5
+
+Suite au menu, le client envoie au serveur:
+CODE001:5
+
+Serveur: Receptionne le code, entre dans une fonction de checking
+Dans le message il y a CODE001, le serveur parse ce message et récupère la taille du mot
+Le serveur envoie la fonction de jeu du pendu de paramètre le socket, son adresse et la taille du mot
+
+
+
+
+Le serveur envoie: Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
+
+Client: envoie un char
+
+Cas bonne lettre:
+> e
+> Bien joué! Vous avez trouver une lettre  e _ _ _ e Pendu : Vie restante: 7
+Lettres déjà utilisées : e
+
+Cas mauvaise lettre:
+a
+>       _______     
+      |       |    
+      |            
+      |            
+      |            
+      |            
+      |          
+      |          
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 6
+Lettres déjà utilisées : e,a
+
+
+Cas mot de taille égale au pendu:
+    Cas ou c'est le bon mot
+ecole
+> Vous avez gagné ! Bravo ! Votre mot était: ecole
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+Cas REPLAY:
+Client: REPLAY
+Serveur envoie: > Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
+
+Cas mot de taille égale au pendu:
+    Cas ou c'est pas le bon mot
+allea 
+> Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. Votre mot était: aller
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+Cas: gain avec uniquement des char
+> Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
+t
+> Bien joué! Vous avez trouver une lettre  t _ _ _ _ Pendu : Vie restante: 7
+Lettres déjà utilisées : t
+a
+> Bien joué! Vous avez trouver une lettre  t a _ _ _ Pendu : Vie restante: 7
+Lettres déjà utilisées : t,a
+p
+> Bien joué! Vous avez trouver une lettre  t a p _ _ Pendu : Vie restante: 7
+Lettres déjà utilisées : t,a,p
+i
+> Bien joué! Vous avez trouver une lettre  t a p i _ Pendu : Vie restante: 7
+Lettres déjà utilisées : t,a,p,i
+s
+> Bravo vous avez gagné la partie , vous avez trouvé le mot qui était tapis Votre mot était: tapis
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+
+Cas perte avec uniquement des char:
+> Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
+d
+>       _______     
+      |       |    
+      |            
+      |            
+      |            
+      |            
+      |          
+      |          
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 6
+Lettres déjà utilisées : d
+d
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |            
+      |          
+      |          
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 5
+Lettres déjà utilisées : d,d
+d
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |      _|_   
+      |      | | 
+      |      |_| 
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 4
+Lettres déjà utilisées : d,d,d
+d
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |      _|_   
+      |    / | | 
+      |   /  |_|  
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 3
+Lettres déjà utilisées : d,d,d,d
+d
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |      _|_   
+      |    / | | \
+      |   /  |_|  \ 
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 2
+Lettres déjà utilisées : d,d,d,d,d
+d
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |      _|_   
+      |    / | | \
+      |   /  |_|  \ 
+      |     //^     
+      |    //        
+      |   //         
+     
+Cette lettre a déjà été utilisé , Essai(s) restant: = 1
+Lettres déjà utilisées : d,d,d,d,d,d
+d
+> Vous avez perdu ! 
+  _______     
+         |       |    
+         |       _    
+         |      / \  
+         |      \_/  
+         |      _|_   
+         |    / | | \ 
+         |   /  |_|  \ 
+         |     //^\\     
+         |    //   \\     
+         |   //     \\    
+        Votre mot était: table
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+
+cas exit:
+exit
+Au revoir
+
+
+
+
+
+9. Définir précisément les diagrammes qui décrivent : une partie gagnée, perdue, abandonnée
+par le client
+
+Diagramme 1: Serveur Pendu 1J
+Diagramme 2: Serveur Pendu NJ
+Diagramme 3: Chat

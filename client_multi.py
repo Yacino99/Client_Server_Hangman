@@ -12,8 +12,7 @@ def menu(socket):
         1.Jouer au pendu 1 Joueur
         2.Jouer au pendu N joueurs
         3.Chat
-        4.Jouer contre le serveur
-        5.Exit/Quit
+        4.Exit/Quit
         """)
         rep=input("Que voulez-vous faire? ")
         if rep=="1":
@@ -35,11 +34,6 @@ def menu(socket):
             send(socket,"CODE003"+":"+pseudo)
             rep = None
         elif rep=="4":
-            print("\n Jouer contre le serveur")
-            motCaches = input("Veuillez choisir le mot que le serveur doit deviner\n")
-            send(socket,"CODE004"+":"+motCaches)
-            rep = None
-        elif rep=="5":
             print("\n Quitter") 
             rep = None
             socket.close()
@@ -61,6 +55,7 @@ def Sending(c):
         if(message.strip() == "exit"):
             print("Au revoir")
             quit = 1
+            s.close()
             sys.exit()
         else:
             message_bytes = bytes(message, "utf-8")

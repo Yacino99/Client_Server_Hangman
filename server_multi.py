@@ -287,11 +287,9 @@ def playerThread(c, port, tailleMot):
                     clientCharsSoFar+=msg
                     nbVie -=1
                     if(nbVie <= 0):
-                        #lost = True
-                        send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
-                        #break
+                       send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+messageQuitter)
                     else:
-                        send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
+                       send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
             elif len(msg) == len(wordSelected) and msg != "REPLAY":
                 #Cas ou c'est un test
                 if msg == wordSelected:

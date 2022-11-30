@@ -21,7 +21,7 @@ def menu(socket):
         rep=input("Que voulez-vous faire? ")
         if rep=="1":
             print("\nPendu 1J")
-            tailleMot = input("Veuillez choisir la taille du mot entre 3 et 9: ")
+            tailleMot: str = input("Veuillez choisir la taille du mot entre 3 et 9: ")
             if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
                 send(socket,"CODE001:"+tailleMot)
                 rep = None

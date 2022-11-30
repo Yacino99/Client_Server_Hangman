@@ -13,18 +13,124 @@ _Réceptionner les message du client -> analyse d'un message reçu, puis renvoi 
 _Gérer le chat (fonctionnalité ajouté) -> broadcast un message reçu
 _Gérer les clients entrant/sortant
 5. Qui du serveur ou du client fixe les règles du jeu ?
-Le serveur fixe les règles du jeu du pendu
+Le serveur fixe les règles du jeu du pendu.
 Cependant le client peut choisir des paramètres, comme la taille du mot, ou son pseudo.
 6. Définir la structure et les champs d’un message envoyé par le client.
 Dans un premier temps, à la connexion
 CODE001:N pour jouer à un pendu de taille N
 CODE002 pour jouer à un pendu de taille quelconque, en multijoueur
 CODE003:X pour entrer dans un chat avec X comme pseudo
+Ensuite le serveur récupère les messages du client pour le jeu du pendu.
+Si le message est REPLAY la partie s'arrête, et le menu s'affiche de nouveau
+Si le message est quit le client quitte le serveur, deconnection du socket
+Autrement le message est inteprété par le serveur.
+Trois cas: 
+_string de taille 1
+Si le string est dans le mot recherché, on enlève ce char du tampon
+sinon le client perd une vie
+Si le tampon est vide le client a gagné.  
+_string de taille du mot recherché pour le jeu du pendu
+Si c'est le mot recherché, le client a gagné, sinon le client a perdu
+_string qui n'est pas de taille 1, et qui n'est pas de taille au mot recherché
+le client a perdu
+
 7. Définir la structure et les champs d’un message envoyé par le serveur.
-exit: le client se déconnecte
-string de taille du mot: test si c'est le bon mot, si oui gagné, si non perdu
-string de taille 1: test une lettre pour le pendu, si oui ajout d'une lettre dans le pendu, si non perte d'une vie.
-string de taille autre que 1 ou du mot: le client a perdu
+Le message envoie différent message concernant le jeu du pendu.
+_Message de bienvenue:
+Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
+
+_Cas d'une bonne lettre:
+Bien joué! Vous avez trouver une lettre  _ a _ _ Pendu : Vie restante: 7
+Lettres déjà utilisées : a
+
+_Cas d'une mauvaise lettre:
+Lettres déjà utilisées : a,a
+c
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |            
+      |          
+      |          
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 5
+Lettres déjà utilisées : a,a,c
+
+
+
+_Cas d'un test concluant:
+> Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
+lever
+> Vous avez gagné ! Bravo ! Votre mot était: lever
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+_Cas d'un test non concluant:
+Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché Votre mot était: escalier
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+_Cas d'une victoire avec char
+> Bien joué! Vous avez trouver une lettre  e s c a l i e _ Pendu : Vie restante: 7
+Lettres déjà utilisées : e,s,c,a,l,i
+r
+> Bravo vous avez gagné la partie , vous avez trouvé le mot qui était escalier Votre mot était: escalier
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+_Cas d'une defaite par manque de vie:
+a
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |      _|_   
+      |    / | | \
+      |   /  |_|  \ 
+      |            
+      |            
+      |            
+ 
+Cette lettre a déjà été utilisé , Essai(s) restant: = 2
+Lettres déjà utilisées : a,a,a,a,a,a
+a
+>       _______     
+      |       |    
+      |       _    
+      |      / \  
+      |      \_/  
+      |      _|_   
+      |    / | | \
+      |   /  |_|  \ 
+      |     //^     
+      |    //        
+      |   //         
+     
+Cette lettre a déjà été utilisé , Essai(s) restant: = 1
+Lettres déjà utilisées : a,a,a,a,a,a,a
+a
+> Vous avez perdu ! 
+  _______     
+         |       |    
+         |       _    
+         |      / \  
+         |      \_/  
+         |      _|_   
+         |    / | | \ 
+         |   /  |_|  \ 
+         |     //^\\     
+         |    //   \\     
+         |   //     \\    
+        Votre mot était: salon
+Envoyer REPLAY pour rejouer, exit pour quitter
+
+
+
 8. Elaborer la séquencement des messages échangés entre le client et le serveur
 
 Menu côté client:
@@ -91,6 +197,12 @@ allea
 > Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. Votre mot était: aller
 Envoyer REPLAY pour rejouer, exit pour quitter
 
+> REPLAY
+
+1.Jouer au pendu 1 Joueur
+2.Jouer au pendu N joueurs
+3.Chat
+4.Exit/Quit
 
 Cas: gain avec uniquement des char
 > Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!
@@ -253,3 +365,4 @@ Concernant le chat, tout les clients connectés au serveur reçoivent les messag
 9. Définir précisément les diagrammes qui décrivent : une partie gagnée, perdue, abandonnée
 par le client
 
+Voire diagramme ci-joint.

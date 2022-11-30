@@ -228,11 +228,28 @@ Au revoir
 
 
 
+Dans le cas du pendu N Joueurs, cas 2 c'est la même chose sauf que la partie commence après un timeur.
+Le timeur est lancé suite à la première connexion du joueur à ce mode de jeu
+A la fin du timeur, la partie se lance.
+
+Quand un joueur a finit la partie, il attends que le autres joueurs aient aussi finit la partie
+
+Une fois que tout les joueurs ont finit la partie, 
+le serveur envoie a chaque joueur s'il a trouvé le mot ou non,
+et envoie a tout les joueurs qui a gagné.
+
+Puis un menu s'affiche pour chaque joueur, leur proposant de:
+_faire une partie 1 joueur
+_faire une partie N joueur
+_accéder à un chat
+
+
+Concernant le chat, tout les clients connectés au serveur reçoivent les message d'une personne étant entrée dans le chat.
+
+
+
 
 
 9. Définir précisément les diagrammes qui décrivent : une partie gagnée, perdue, abandonnée
 par le client
 
-Diagramme 1: Serveur Pendu 1J
-Diagramme 2: Serveur Pendu NJ
-Diagramme 3: Chat

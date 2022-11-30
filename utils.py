@@ -2,7 +2,7 @@
 
 import random
 import datetime
-
+import sys
 
 def addSecs(tm, secs):
     fulldate = datetime.datetime(100,1,1,tm.hour,tm.minute,tm.second)
@@ -10,8 +10,10 @@ def addSecs(tm, secs):
     return fulldate.time()
 
 def sendToPort(socket, msg, port):
-    socket.sendto(bytes(msg,'utf-8'), ("127.0.0.1",int(port)))
-
+    try:
+        socket.sendto(bytes(msg,'utf-8'), ("127.0.0.1",int(port)))
+    except:
+        socket.close()
 def send(socket, msg):
     try:
         socket.send(bytes(msg,'utf-8'))  

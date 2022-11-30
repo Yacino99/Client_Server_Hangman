@@ -1,10 +1,14 @@
 from socket import *
 import sys
+import threading
+import _thread
+
 from utils import *
 from _thread import *
+quit = 0    
+
 if len(sys.argv) != 3:
     sys.exit(-1)
-quit = 0    
 def menu(socket):
     rep=True
     while rep:
@@ -37,7 +41,7 @@ def menu(socket):
             print("\n Quitter") 
             rep = None
             socket.close()
-            break
+            sys.exit()
         else:
             print("\n Veuillez selectionner un choix valide")
 #Connection socket
@@ -55,10 +59,10 @@ def Sending(c):
         if(message.strip() == "exit"):
             print("Au revoir")
             quit = 1
-            s.close()
-            sys.exit()
+            c.close()
+            sys.exit
         else:
-            message_bytes = bytes(message, "utf-8")
+            message_bytes: bytes = bytes(message, "utf-8")
             c.send(message_bytes)
 
 menu(s)

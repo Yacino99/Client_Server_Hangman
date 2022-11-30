@@ -15,6 +15,7 @@ host = 0
 compteurFini = 0
 viePartieGagnante = -100
 
+
 def resetVariables():
     global compteurJoueur
     global lancerLaPartie
@@ -78,9 +79,8 @@ def chatThread(socket,addr, pseudo):
         broadcast(messageTest)
 
 #Menu gèrer côté serveur pour gérer le replay multijoueurs
-def menu(c, port):
+def menu(c, port) -> None:
     #On reset toute les variables
-    resetVariables()
     send(c,"""\n
             1.Jouer au pendu 1 Joueur
             2.Jouer au pendu N joueurs
@@ -136,6 +136,8 @@ def endGame(c,port, vie, gagne):
             #Cas ou il a trouvé le mot, et qu'il a le nombre de vie mini
             if viePartieGagnante==vie:
                 broadcast("\nLe joueur "+str(port[1])+" a gagné la partie")
+            
+            resetVariables()
             time.sleep(5)
             #Retour au menu
             menu(c,port)
@@ -177,7 +179,11 @@ def twoPlayerThread(c, port):
                 c.close()
                 sys.exit()
 
+          
+
             msg = msg.decode()
+
+        
 
             print("le client "+str(port)+" a envoyé : ",msg)
             msg = msg.lower()
@@ -255,6 +261,8 @@ def playerThread(c, port, tailleMot):
         if not msg:
             c.close()
             sys.exit()
+
+        
         msg = msg.decode()
         #Si message = REPLAY on rejoue
         if msg.find("REPLAY")!=-1:
@@ -362,6 +370,11 @@ def checker2(c,addr,CODE):
                     twoPlayerThread(c,addr)
             else:
                 sendToPort(c,"La partie est déjà lancé!",addr[1])
+                compteurJoueur-=1
+                time.sleep(1)
+                menu(c,addr)
+
+       
         elif CODE == "CODE003":
             print(msg)
             chatThread(c,addr,str(addr[1]))
@@ -413,6 +426,11 @@ def checker(c,addr):
                     twoPlayerThread(c,addr)
             else:
                 sendToPort(c,"La partie est déjà lancé!",addr[1])
+                compteurJoueur-=1
+                time.sleep(1)
+                menu(c,addr)
+
+
         elif msg.find("CODE003")!=-1:
             print(msg)
             pseudo = msg.split(":")[1]

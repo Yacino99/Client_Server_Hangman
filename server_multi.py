@@ -61,7 +61,7 @@ def remove(connection):
 #Fonction gérant le chat
 def chatThread(socket,addr, pseudo):
     print("chatThread: "+pseudo)
-    MessageDebut = "Bienvenu sur notre chat! Votre pseudo est: "+pseudo+"\n"
+    MessageDebut = "Bienvenu sur notre chat! Votre pseudo est: "+pseudo+"\nPour aller au menu faites /menu\n pour quitter faites /quit"
     send(socket,MessageDebut)
     while True:
         msg = socket.recv(1024)
@@ -70,13 +70,18 @@ def chatThread(socket,addr, pseudo):
             socket.close()
             sys.exit()
         msg = msg.decode()
-        #Parsing du message
-        message = pseudo+":"
-        messageTest = message+msg
 
-        print(str(addr[1])+":"+messageTest)
-        #Broadcast du message
-        broadcast(messageTest)
+        if(msg.find("/menu")!=-1):
+            menu(socket,addr)
+        elif(msg.find("/quit")!=-1):
+            send(socket,"quitter")
+        else:
+            #Parsing du message
+            message = pseudo+":"
+            messageTest = message+msg
+            print(str(addr[1])+":"+messageTest)
+            #Broadcast du message
+            broadcast(messageTest)
 
 #Menu gèrer côté serveur pour gérer le replay multijoueurs
 def menu(c, port) -> None:
@@ -96,17 +101,30 @@ def menu(c, port) -> None:
             c.close()
             sys.exit()
         if rep=="1":
-            print("\nPendu 1J")
-            checker2(c,port,"CODE001")
-            break
+            send(c,"Veuillez choisir la taille du mot (format CODE004:TAILLEMOT)")
+            while True:
+                msg = c.recv(1024)
+                msg = msg.decode()
+                if msg.find("CODE004")!=-1:
+                    tailleMot = msg.split(":")[1]
+                    if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
+                        p(c,port,tailleMot)
+                    else:
+                        send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
         elif rep=="2":
             print("\n Pendu NJ")
             checker2(c,port,"CODE002")
             break
         elif rep=="3":
-            print("\n Chat")
-            checker2(c,port,"CODE003")
-            break            
+            send(c,"Veuillez choisir votre pseudo (format CODE005:pseudo)")
+            while True:
+                msg = c.recv(1024)
+                msg = msg.decode()
+                if msg.find("CODE005")!=-1:
+                    pseudo = msg.split(":")[1]
+                    chatThread(c,addr,pseudo)
+                else:
+                    send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
         elif rep=="4":
             print("\n Quitter") 
             send(c,"quitter")
@@ -266,7 +284,7 @@ def playerThread(c, port, tailleMot):
         msg = msg.decode()
         #Si message = REPLAY on rejoue
         if msg.find("REPLAY")!=-1:
-            playerThread(c,port,tailleMot)
+            menu(c,port)
         #Sinon jeu du pendu
         else:
             print("le client "+str(port)+" a envoyé : ",msg)
@@ -345,7 +363,7 @@ def checker2(c,addr,CODE):
         sys.exit()
     else:
         msg = msg.decode()
-        if CODE == "CODE001":
+        if CODE.find("CODE001")!=-1:
             playerThread(c,addr,6)
         elif CODE == "CODE002":
             compteurJoueur+=1

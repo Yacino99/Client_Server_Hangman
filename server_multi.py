@@ -92,11 +92,11 @@ def chatThread(socket,addr, pseudo):
 def menu(c, port) -> None:
     #On reset toute les variables
     send(c,"""\n
-            1.Jouer au pendu 1 Joueur
-            2.Jouer au pendu N joueurs
-            3.Chat
-            4.Exit/Quit
-            """)
+1.Jouer au pendu 1 Joueur
+2.Jouer au pendu N joueurs
+3.Chat
+4.Exit/Quit
+""")
     while True:
         msg = c.recv(1024)
         msg = msg.decode()
@@ -117,7 +117,7 @@ def menu(c, port) -> None:
                     else:
                         send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
         elif rep=="2":
-            print("\n Pendu NJ")
+            #print("\n Pendu NJ")
             checker2(c,port,"CODE002")
             break
         elif rep=="3":

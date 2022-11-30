@@ -14,7 +14,8 @@ tempsDebutPartie = 0
 host = 0
 compteurFini = 0
 viePartieGagnante = -100
-
+motNJoueurs = ""
+choixDuMot = 0
 
 def resetVariables():
     global compteurJoueur
@@ -25,6 +26,8 @@ def resetVariables():
     global host
     global compteurFini
     global viePartieGagnante
+    global motNJoueur
+    global choixDuMot
     compteurJoueur = 0
     lancerLaPartie = 0
     lobby = 0
@@ -33,6 +36,8 @@ def resetVariables():
     host = 0
     compteurFini = 0
     viePartieGagnante = -100
+    motNJoueur = "bateau"
+    choixDuMot = 0
 
 mysocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 
@@ -108,7 +113,7 @@ def menu(c, port) -> None:
                 if msg.find("CODE004")!=-1:
                     tailleMot = msg.split(":")[1]
                     if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
-                        p(c,port,tailleMot)
+                        playerThread(c,port,tailleMot)
                     else:
                         send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
         elif rep=="2":
@@ -156,16 +161,17 @@ def endGame(c,port, vie, gagne):
                 broadcast("\nLe joueur "+str(port[1])+" a gagné la partie")
             
             resetVariables()
-            time.sleep(5)
+            time.sleep(1)
             #Retour au menu
             menu(c,port)
 
 
 #Fonction gèrant les N joueurs sur une partie
-def twoPlayerThread(c, port):
+def twoPlayerThread(c, port, wordSelected):
     global host
     global viePartieGagnante
     global compteurJoueur
+    print(wordSelected)
 
     #Attente de la fin du compteur pour le début de la partie
     while True:
@@ -178,8 +184,6 @@ def twoPlayerThread(c, port):
         MessageDebut = "Bienvenu sur le jeu du Pendu en version 2 joueurs! Veuillez saisir un char pour jouer au Pendu!"
         send(c,MessageDebut)
         #Mot selectionner pour le jeu du Pendu
-        wordSelected = "Bateau"
-        wordSelected = wordSelected.lower()
 
         #Tampon pour le mot "gagnant"
         tampon = wordSelected
@@ -196,13 +200,7 @@ def twoPlayerThread(c, port):
                 compteurJoueur-=1
                 c.close()
                 sys.exit()
-
-          
-
             msg = msg.decode()
-
-        
-
             print("le client "+str(port)+" a envoyé : ",msg)
             msg = msg.lower()
             if len(msg) == 1 and msg.isalpha():  #test si c'est un char
@@ -352,6 +350,8 @@ def checker2(c,addr,CODE):
     global tempsDebutPartie
     global tempsCompteur
     global compteurJoueur
+    global motNJoueur
+    global choixDuMot
     try:
         msg = c.recv(1024)
     except:
@@ -363,39 +363,50 @@ def checker2(c,addr,CODE):
         sys.exit()
     else:
         msg = msg.decode()
-        if CODE.find("CODE001")!=-1:
-            playerThread(c,addr,6)
-        elif CODE == "CODE002":
+        if CODE == "CODE002":
             compteurJoueur+=1
             clientsNJ.append(c)
             #Etape1: Rejoindre le lobby
             if lancerLaPartie == 0:
                 if hostGame == 0:
-                    #Si le host join la game
-                    #On créé le compteur, pour commencer la partie
+                    if choixDuMot == 0:
+                        choixDuMot = 1
+                        send(c,"Veuillez choisir la taille du mot entre 3 et 9 char(format=CODE006:tailleMot)")
+                        while True:
+                            msg = c.recv(1024)
+                            msg = msg.decode()
+                            if msg.find("CODE006")!=-1:
+                                tailleMot = msg.split(":")[1]
+                                print(tailleMot)
+                                if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
+                                    motNJoueur = importMotFichier(tailleMot)
+                                    print("ici"+motNJoueur)
+                                    break
+
+                    else:
+                        sendToPort(c,"Le mot est en train d'être choisi!",addr[1])
+                        compteurJoueur-=1
+                        time.sleep(1)
+                        menu(c,addr)
                     tempsCompteur = 5
                     tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
                     sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
                     +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
                     countdown(tempsCompteur)
-                    twoPlayerThread(c,addr)
+                    twoPlayerThread(c,addr,motNJoueur)
                     hostGame=1
+
                 elif hostGame ==1:
                     joiningMessage = str(addr[1])+" a rejoint la partie\n"
                     sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
                     +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
                     broadcast(joiningMessage)
-                    twoPlayerThread(c,addr)
+                    twoPlayerThread(c,addr,motNJoueur)
             else:
                 sendToPort(c,"La partie est déjà lancé!",addr[1])
                 compteurJoueur-=1
                 time.sleep(1)
                 menu(c,addr)
-
-       
-        elif CODE == "CODE003":
-            print(msg)
-            chatThread(c,addr,str(addr[1]))
         if len(msg) == 0:
             c.close()
             clients.remove(c)
@@ -408,6 +419,8 @@ def checker(c,addr):
     global tempsDebutPartie
     global tempsCompteur
     global compteurJoueur
+    global motNJoueur
+    global choixDuMot
     try:
         msg = c.recv(1024)
     except:
@@ -427,21 +440,40 @@ def checker(c,addr):
             #Etape1: Rejoindre le lobby
             if lancerLaPartie == 0:
                 if hostGame == 0:
-                    #Si le host join la game
-                    #On créé le compteur, pour commencer la partie
-                    tempsCompteur = 5
-                    tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
-                    sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
-                    +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
-                    countdown(tempsCompteur)
-                    twoPlayerThread(c,addr)
-                    hostGame=1
+                    if choixDuMot == 0:
+                        choixDuMot = 1
+                        send(c,"Veuillez choisir la taille du mot entre 3 et 9 char(format=CODE006:tailleMot)")
+                        while True:
+                            msg = c.recv(1024)
+                            msg = msg.decode()
+                            print(msg)
+                            if msg.find("CODE006")!=-1:
+                                tailleMot = msg.split(":")[1]
+                                if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
+                                    motNJoueur = importMotFichier(tailleMot)
+                                    break
+                        #Si le host join la game
+                        #On créé le compteur, pour commencer la partie
+                        tempsCompteur = 5
+                        tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
+                        sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
+                        +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
+                        countdown(tempsCompteur)
+                        twoPlayerThread(c,addr,motNJoueur)
+                        hostGame=1
+                    else:
+                        sendToPort(c,"Le mot est en train d'être choisi!",addr[1])
+                        compteurJoueur-=1
+                        time.sleep(1)
+                        menu(c,addr)
+
                 elif hostGame ==1:
+                    print(motNJoueur)
                     joiningMessage = str(addr[1])+" a rejoint la partie\n"
                     sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
                     +"\nLa partie commencera a "+str(tempsDebutPartie),addr[1])
                     broadcast(joiningMessage)
-                    twoPlayerThread(c,addr)
+                    twoPlayerThread(c,addr,motNJoueur)
             else:
                 sendToPort(c,"La partie est déjà lancé!",addr[1])
                 compteurJoueur-=1

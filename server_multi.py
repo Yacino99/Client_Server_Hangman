@@ -8,11 +8,11 @@ import time
 import datetime
 compteurJoueur=0
 lancerLaPartie=0
-lobby = 0
 hostGame = 0
 tempsDebutPartie = 0
 host = 0
 compteurFini = 0
+#Gestion de la vie globale entre les différents threads pour une partie multi
 viePartieGagnante = -100
 motNJoueurs = ""
 choixDuMot = 0
@@ -20,9 +20,10 @@ chrono = 0
 partieFiniAvantChrono = 0
 
 def resetVariables():
+    #Represente le nombre de joueurs
     global compteurJoueur
+    #Si une partie est lancé
     global lancerLaPartie
-    global lobby
     global hostGame
     global tempsDebutPartie
     global host
@@ -32,7 +33,6 @@ def resetVariables():
     global choixDuMot
     compteurJoueur = 0
     lancerLaPartie = 0
-    lobby = 0
     hostGame = 0
     tempsDebutPartie = 0
     host = 0
@@ -90,9 +90,8 @@ def chatThread(socket,addr, pseudo):
             #Broadcast du message
             broadcast(messageTest)
 
-#Menu gèrer côté serveur pour gérer le replay multijoueurs
+#Menu gèrer côté serveur pour gérer le replay
 def menu(c, port) -> None:
-    #On reset toute les variables
     send(c,"""\n
 1.Jouer au pendu 1 Joueur
 2.Jouer au pendu N joueurs
@@ -120,7 +119,6 @@ def menu(c, port) -> None:
                     else:
                         send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
         elif rep=="2":
-            #print("\n Pendu NJ")
             checker2(c,port,"CODE002")
             break
         elif rep=="3":
@@ -134,9 +132,7 @@ def menu(c, port) -> None:
                 else:
                     send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
         elif rep=="4":
-            print("\n Quitter") 
             send(c,"quitter")
-
         elif rep =="5":
             send(c,"Veuillez choisir la taille du mot (format CODE010:TAILLEMOT)")
             while True:
@@ -148,7 +144,6 @@ def menu(c, port) -> None:
                         playerThreadChrono(c,port,tailleMot)
                     else:
                         send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
-
         else:
             send(c,"\n Veuillez selectionner un choix valide")
     
@@ -175,12 +170,10 @@ def endGame(c,port, vie, gagne):
             #Cas ou il a trouvé le mot, et qu'il a le nombre de vie mini
             if viePartieGagnante==vie:
                 broadcast("\nLe joueur "+str(port[1])+" a gagné la partie")
-            
             resetVariables()
             time.sleep(1)
             #Retour au menu
             menu(c,port)
-
 
 #Fonction gèrant les N joueurs sur une partie
 def twoPlayerThread(c, port, wordSelected):
@@ -436,6 +429,7 @@ def playerThreadChrono(c, port, tailleMot):
 def countdown(num_of_secs):
     global lancerLaPartie
     global host
+
     global hostGame
     hostGame = 1
     while num_of_secs:
@@ -455,17 +449,14 @@ def countdownChrono(c,port,num_of_secs):
     global partieFiniAvantChrono 
     while num_of_secs:
         m, s = divmod(num_of_secs, 60)
-        min_sec_format = '{:02d}:{:02d}'.format(m, s)
-       # print(min_sec_format, end='/r')
         time.sleep(1)
         num_of_secs -= 1
-        
     chrono = 1
     if(partieFiniAvantChrono==0):
         sendToPort(c,"Le chronomètre est finit!",port[1])
 
 
-#Fonction checker2 pour la gestion du CODE du menu côté serveur
+#Fonction checker2 pour la gestion du CODE pour le menu côté serveur
 def checker2(c,addr,CODE):
     global lancerLaPartie
     global hostGame
@@ -560,10 +551,14 @@ def checker(c,addr):
         elif msg in "CODE002":
             compteurJoueur+=1
             #Etape1: Rejoindre le lobby
+            #Si la partie est lancé
             if lancerLaPartie == 0:
+                #Si c'est l'host de la game
                 if hostGame == 0:
+                    #S'il n'a pas encore choisit le mot
                     if choixDuMot == 0:
                         choixDuMot = 1
+                        #Il choisit le mot
                         send(c,"Veuillez choisir la taille du mot entre 3 et 9 char(format=CODE006:tailleMot)")
                         while True:
                             msg = c.recv(1024)
@@ -575,7 +570,7 @@ def checker(c,addr):
                                     motNJoueur = importMotFichier(tailleMot)
                                     break
                         #Si le host join la game
-                        #On créé le compteur, pour commencer la partie
+                        #On créé le compteur, pour commencer la partie, et qu'il a choisit le mot
                         tempsCompteur = 5
                         tempsDebutPartie = addSecs(datetime.datetime.now().time(),tempsCompteur)
                         sendToPort(c,"En attente de joueurs. \nTemps avant début de la partie: "+str(tempsCompteur)+"s"
@@ -584,11 +579,12 @@ def checker(c,addr):
                         twoPlayerThread(c,addr,motNJoueur)
                         hostGame=1
                     else:
+                        #Sinon le mot est en train d'être choisit, on affiche le menu
                         sendToPort(c,"Le mot est en train d'être choisi!",addr[1])
                         compteurJoueur-=1
                         time.sleep(1)
                         menu(c,addr)
-
+                #Si ce n'est pas le créateur de la partie
                 elif hostGame ==1:
                     print(motNJoueur)
                     joiningMessage = str(addr[1])+" a rejoint la partie\n"
@@ -602,11 +598,13 @@ def checker(c,addr):
                 time.sleep(1)
                 menu(c,addr)
 
+        #Gestion du chat
         elif msg.find("CODE003")!=-1:
             print(msg)
             pseudo = msg.split(":")[1]
             chatThread(c,addr,pseudo)
 
+        #Gestion du serveur pendu chrono
         elif msg.find("CODE010")!=-1:
             tailleMot = msg.split(":")[1]
             playerThreadChrono(c,addr,tailleMot)
@@ -620,10 +618,12 @@ def checker(c,addr):
 while T: 
     [read,_,_] = select.select(clients,[],[])
     for s in read:
+        #A la connexion avec le socket, on l'ajoute à une lsite
         if s == mysocket:
             (socketclient,addr) = mysocket.accept()
             clients.append(socketclient)
             try:
+                #A la connexion, on lance un thread (la fonction checker)
                 start_new_thread(checker, (socketclient,addr))
             except:
                 clients.remove(socketclient)

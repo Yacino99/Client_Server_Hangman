@@ -17,6 +17,7 @@ def menu(socket):
         2.Jouer au pendu N joueurs
         3.Chat
         4.Exit/Quit
+        5.Jouer au pendu chronométré
         """)
         rep=input("Que voulez-vous faire? ")
         if rep=="1":
@@ -42,6 +43,11 @@ def menu(socket):
             rep = None
             socket.close()
             sys.exit()
+        elif rep=="5":
+            tailleMot: str = input("Veuillez choisir la taille du mot entre 3 et 9: ")
+            if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
+                send(socket,"CODE010:"+tailleMot)
+            rep = None
         else:
             print("\n Veuillez selectionner un choix valide")
 #Connection socket

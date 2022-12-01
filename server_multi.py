@@ -16,6 +16,7 @@ compteurFini = 0
 viePartieGagnante = -100
 motNJoueurs = ""
 choixDuMot = 0
+chrono = 0
 
 def resetVariables():
     global compteurJoueur
@@ -327,6 +328,86 @@ def playerThread(c, port, tailleMot):
 
 
 
+
+#Gestion du serveur pendu pour N joueur, partie non multijoueur
+def playerThreadChrono(c, port, tailleMot):    
+    global chrono
+    start_new_thread(countdownChrono, (c,port,3,))
+
+   
+    #Message de présentation du jeu
+    MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
+    send(c,MessageDebut)
+    wordSelected = importMotFichier(tailleMot)
+    print("Le mot que le client doit trouver est :"+wordSelected)
+    #Tampon pour le mot "gagnant"
+    tampon = wordSelected
+    #Lettres valide utilisés
+    alreadyUsedLetter = ""
+    #Toutes les lettres utilisés
+    clientCharsSoFar = ""
+    #Nombre de vie du client
+    nbVie = 7
+    messageQuitter  = "Votre mot était: "+wordSelected+"\nEnvoyer REPLAY pour rejouer, exit pour quitter"
+    while True:
+        print(chrono)
+        msg = c.recv(1024)
+        if not msg:
+            c.close()
+            sys.exit()
+
+        
+        msg = msg.decode()
+        #Si message = REPLAY on rejoue
+        if(chrono == 1):
+            nbVie = 0
+            menu(c,port)
+
+        if msg.find("REPLAY")!=-1:
+            menu(c,port)
+        #Sinon jeu du pendu
+        else:
+            print("le client "+str(port)+" a envoyé : ",msg)
+            msg = msg.lower()
+            #Cas ou y a un seul charactère 
+            if len(msg) == 1 and msg.isalpha():
+                #Liste des char déjà utilisé
+                #Bingo: bonne lettre
+                if msg not in alreadyUsedLetter and msg in wordSelected:
+                    MessageWin = "Bien joué! Vous avez trouver une lettre "
+                    clientCharsSoFar += msg
+                    tampon = tampon.replace(msg,"")
+                    alreadyUsedLetter+=msg
+                    print("tampon : "+tampon)
+                    #Si tampon vide, gain de la partie
+                    if tampon=="":
+                        send(c,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
+                    else:
+                        MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
+                        MessageWin +=" Pendu : Vie restante: "
+                        MessageWin += str(nbVie)+"\n"
+                        MessageWin += "Lettres déjà utilisées : "+(",".join(clientCharsSoFar))
+                        send(c,MessageWin)
+                else:
+                    #Cas ou la lettre est dans le mot, mais elle est déjà utilsiée
+                    clientCharsSoFar+=msg
+                    nbVie -=1
+                    if(nbVie <= 0):
+                       send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+str(messageQuitter))
+                    else:
+                       send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
+            elif len(msg) == len(wordSelected) and msg != "REPLAY":
+                #Cas ou c'est un test
+                if msg == wordSelected:
+                    #win
+                    send(c,"Vous avez gagné ! Bravo ! "+messageQuitter)
+                else:
+                    send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
+            else:
+                if(msg!="REPLAY"):
+                    send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)       
+
+
 #Compte a rebours
 def countdown(num_of_secs):
     global lancerLaPartie
@@ -342,6 +423,21 @@ def countdown(num_of_secs):
     lancerLaPartie = 1
     host = 1
     print('Lancer la partie!.')
+
+
+
+def countdownChrono(c,port,num_of_secs):
+    global chrono
+    while num_of_secs:
+        m, s = divmod(num_of_secs, 60)
+        min_sec_format = '{:02d}:{:02d}'.format(m, s)
+        print(min_sec_format, end='/r')
+        time.sleep(1)
+        num_of_secs -= 1
+        
+    chrono = 1
+    sendToPort(c,"Le chronomètre est finit!",port[1])
+
 
 #Fonction checker2 pour la gestion du CODE du menu côté serveur
 def checker2(c,addr,CODE):
@@ -480,11 +576,15 @@ def checker(c,addr):
                 time.sleep(1)
                 menu(c,addr)
 
-
         elif msg.find("CODE003")!=-1:
             print(msg)
             pseudo = msg.split(":")[1]
             chatThread(c,addr,pseudo)
+
+        elif msg.find("CODE010")!=-1:
+            tailleMot = msg.split(":")[1]
+            playerThreadChrono(c,addr,tailleMot)
+            
         if len(msg) == 0:
             c.close()
             clients.remove(c)

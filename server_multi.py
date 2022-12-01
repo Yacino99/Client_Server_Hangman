@@ -17,6 +17,7 @@ viePartieGagnante = -100
 motNJoueurs = ""
 choixDuMot = 0
 chrono = 0
+partieFiniAvantChrono = 0
 
 def resetVariables():
     global compteurJoueur
@@ -97,6 +98,7 @@ def menu(c, port) -> None:
 2.Jouer au pendu N joueurs
 3.Chat
 4.Exit/Quit
+5.Jouer au pendu chronométré
 """)
     while True:
         msg = c.recv(1024)
@@ -134,6 +136,19 @@ def menu(c, port) -> None:
         elif rep=="4":
             print("\n Quitter") 
             send(c,"quitter")
+
+        elif rep =="5":
+            send(c,"Veuillez choisir la taille du mot (format CODE010:TAILLEMOT)")
+            while True:
+                msg = c.recv(1024)
+                msg = msg.decode()
+                if msg.find("CODE010")!=-1:
+                    tailleMot = msg.split(":")[1]
+                    if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
+                        playerThreadChrono(c,port,tailleMot)
+                    else:
+                        send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
+
         else:
             send(c,"\n Veuillez selectionner un choix valide")
     
@@ -332,8 +347,10 @@ def playerThread(c, port, tailleMot):
 #Gestion du serveur pendu pour N joueur, partie non multijoueur
 def playerThreadChrono(c, port, tailleMot):    
     global chrono
+    chrono = 0
+    global partieFiniAvantChrono
     start_new_thread(countdownChrono, (c,port,3,))
-
+    partieFiniAvantChrono = 0
    
     #Message de présentation du jeu
     MessageDebut = "Bienvenu sur le jeu du Pendu! Veuillez saisir un char pour jouer au Pendu!"
@@ -350,7 +367,6 @@ def playerThreadChrono(c, port, tailleMot):
     nbVie = 7
     messageQuitter  = "Votre mot était: "+wordSelected+"\nEnvoyer REPLAY pour rejouer, exit pour quitter"
     while True:
-        print(chrono)
         msg = c.recv(1024)
         if not msg:
             c.close()
@@ -365,6 +381,7 @@ def playerThreadChrono(c, port, tailleMot):
 
         if msg.find("REPLAY")!=-1:
             menu(c,port)
+            partieFiniAvantChrono = 1
         #Sinon jeu du pendu
         else:
             print("le client "+str(port)+" a envoyé : ",msg)
@@ -382,6 +399,7 @@ def playerThreadChrono(c, port, tailleMot):
                     #Si tampon vide, gain de la partie
                     if tampon=="":
                         send(c,"Bravo vous avez gagné la partie , vous avez trouvé le mot qui était "+wordSelected+" "+messageQuitter)
+                        partieFiniAvantChrono = 1
                     else:
                         MessageWin +=lettreTrouve(wordSelected, alreadyUsedLetter)
                         MessageWin +=" Pendu : Vie restante: "
@@ -394,6 +412,7 @@ def playerThreadChrono(c, port, tailleMot):
                     nbVie -=1
                     if(nbVie <= 0):
                        send(c,"Vous avez perdu ! \n"+affichagePendu(nbVie+1, tableauAffichagePendu)+str(messageQuitter))
+                       partieFiniAvantChrono = 1
                     else:
                        send(c,affichageWrongLetter(nbVie,tableauAffichagePendu,clientCharsSoFar))
             elif len(msg) == len(wordSelected) and msg != "REPLAY":
@@ -401,11 +420,16 @@ def playerThreadChrono(c, port, tailleMot):
                 if msg == wordSelected:
                     #win
                     send(c,"Vous avez gagné ! Bravo ! "+messageQuitter)
+                    partieFiniAvantChrono = 1
+
                 else:
                     send(c,"Vous avez totalement perdu car vous avez tenté un tout ou rien et c'etais faux. "+messageQuitter)
+                    partieFiniAvantChrono = 1
             else:
                 if(msg!="REPLAY"):
-                    send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)       
+                    send(c,"Vous avez totalement perdu car votre mot ne fait pas la taille du mot recherché "+messageQuitter)  
+                    partieFiniAvantChrono = 1
+     
 
 
 #Compte a rebours
@@ -428,15 +452,17 @@ def countdown(num_of_secs):
 
 def countdownChrono(c,port,num_of_secs):
     global chrono
+    global partieFiniAvantChrono 
     while num_of_secs:
         m, s = divmod(num_of_secs, 60)
         min_sec_format = '{:02d}:{:02d}'.format(m, s)
-        print(min_sec_format, end='/r')
+       # print(min_sec_format, end='/r')
         time.sleep(1)
         num_of_secs -= 1
         
     chrono = 1
-    sendToPort(c,"Le chronomètre est finit!",port[1])
+    if(partieFiniAvantChrono==0):
+        sendToPort(c,"Le chronomètre est finit!",port[1])
 
 
 #Fonction checker2 pour la gestion du CODE du menu côté serveur

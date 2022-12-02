@@ -342,7 +342,7 @@ def playerThreadChrono(c, port, tailleMot):
     global chrono
     chrono = 0
     global partieFiniAvantChrono
-    start_new_thread(countdownChrono, (c,port,3,))
+    start_new_thread(countdownChrono, (c,port,10,))
     partieFiniAvantChrono = 0
    
     #Message de présentation du jeu
@@ -453,7 +453,7 @@ def countdownChrono(c,port,num_of_secs):
         num_of_secs -= 1
     chrono = 1
     if(partieFiniAvantChrono==0):
-        sendToPort(c,"Le chronomètre est finit!",port[1])
+        sendToPort(c,"Le chronomètre est finit!, veuillez entrer un char pour aller au menu.",port[1])
 
 
 #Fonction checker2 pour la gestion du CODE pour le menu côté serveur

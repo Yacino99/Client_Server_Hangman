@@ -130,7 +130,7 @@ def menu(c, port) -> None:
                     pseudo = msg.split(":")[1]
                     chatThread(c,addr,pseudo)
                 else:
-                    send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
+                    send(c,"Veuillez choisir votre pseudo (format CODE005:pseudo)")
         elif rep=="4":
             send(c,"quitter")
         elif rep =="5":
@@ -143,7 +143,7 @@ def menu(c, port) -> None:
                     if tailleMot.isnumeric() and int(tailleMot)>2 and int(tailleMot)<10:
                         playerThreadChrono(c,port,tailleMot)
                     else:
-                        send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE004:tailleDuMot")
+                        send(c,"Veuillez entrer une taille valide (entre 3 et 9 compris)\n,format = CODE010:tailleDuMot")
         else:
             send(c,"\n Veuillez selectionner un choix valide")
     
